@@ -12,7 +12,7 @@
         body { background-color: var(--bg); color: #D1D1D1; font-family: 'Plus Jakarta Sans', sans-serif; }
         .serif { font-family: 'Tenor Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.3em; }
         .card-item { background: #0E0E0E; border: 1px solid rgba(255,255,255,0.05); padding: 30px; margin-bottom: 15px; }
-        .btn-checkout { background: var(--gold); color: black; font-weight: bold; width: 100%; padding: 20px; text-transform: uppercase; letter-spacing: 0.2em; font-size: 11px; transition: 0.3s; }
+        .btn-checkout { background: var(--gold); color: black; font-weight: bold; width: 100%; padding: 20px; text-transform: uppercase; letter-spacing: 0.2em; font-size: 11px; transition: 0.3s; cursor: pointer; border: none; }
         .btn-checkout:hover { background: #d97706; }
     </style>
 </head>
@@ -25,8 +25,7 @@
 
     <div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div class="lg:col-span-2">
-            <div id="cart-list" class="space-y-4">
-                </div>
+            <div id="cart-list" class="space-y-4"></div>
             <div id="empty-msg" class="hidden py-20 text-center opacity-20 serif text-xs">Bag is empty</div>
         </div>
 
@@ -55,7 +54,8 @@
                 </div>
 
                 <div id="payment-gate" class="space-y-3">
-                    <button id="btn-wa" onclick="checkoutWA()" class="btn-checkout">Checkout via WhatsApp</button>
+                    <button id="btn-email" onclick="checkoutEmail()" class="btn-checkout">Checkout via Email</button>
+                    <p class="text-[8px] opacity-30 text-center mt-4 tracking-widest">Silahkan lampirkan bukti transfer pada email</p>
                     <div id="paypal-button-container" class="mt-4"></div>
                 </div>
             </div>
@@ -87,7 +87,6 @@
             currentCurrency = cart[0].price.includes("IDR") ? "IDR" : "USD";
 
             list.innerHTML = cart.map((item, index) => {
-                // Bersihkan string harga untuk kalkulasi
                 const numericPrice = parseInt(item.price.replace(/[^0-9]/g, ''));
                 totalVal += numericPrice;
 
@@ -110,12 +109,11 @@
             summaryCount.innerText = cart.length;
             summaryTotal.innerText = currentCurrency === "IDR" ? "IDR " + totalVal.toLocaleString() : "$" + totalVal.toLocaleString();
 
-            // Toggle Payment Method Visibility
             if(currentCurrency === "USD") {
-                document.getElementById('btn-wa').classList.add('hidden');
+                document.getElementById('btn-email').classList.add('hidden');
                 initPayPal(totalVal);
             } else {
-                document.getElementById('btn-wa').classList.remove('hidden');
+                document.getElementById('btn-email').classList.remove('hidden');
                 document.getElementById('paypal-button-container').innerHTML = "";
             }
         }
@@ -134,11 +132,22 @@
             }
         }
 
-        function checkoutWA() {
+        function checkoutEmail() {
             const total = document.getElementById('summary-total').innerText;
-            const orderList = cart.map(i => `• ${i.name} (${i.price})`).join('%0A');
-            const message = `Halo Relisn! Saya ingin melakukan pemesanan:%0A%0A${orderList}%0A%0ATotal Investment: ${total}%0A%0AAgent Code: ${agentCode}`;
-            window.location.href = `https://wa.me/6282114777085?text=${message}`;
+            const orderList = cart.map(i => `- ${i.name} (${i.price})`).join('%0D%0A');
+            
+            const emailTujuan = "relisnstudio@gmail.com";
+            const subject = encodeURIComponent("New Order - RELISN ATELIER");
+            
+            // Menyusun isi email dengan baris baru (%0D%0A)
+            const body = encodeURIComponent(
+                `Halo RELISN,\n\nSaya ingin memesan project berikut:\n\n${cart.map(i => `- ${i.name} (${i.price})`).join('\n')}\n\nTotal Investment: ${total}\nAgent Code: ${agentCode}\n\n--- MOHON LAMPIRKAN BUKTI TRANSFER DI BAWAH INI ---`
+            ).replace(/%0A/g, '%0D%0A');
+
+            window.location.href = `mailto:${emailTujuan}?subject=${subject}&body=${body}`;
+            
+            // Optional: Kosongkan keranjang setelah klik (pembeli sudah diarahkan ke email)
+            // localStorage.removeItem('relisn_cart');
         }
 
         function initPayPal(amount) {
