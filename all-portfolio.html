@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARCHIVE | RELISN STUDIO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;500;700&family=Tenor+Sans&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #080808; --card: #0E0E0E; --gold: #f59e0b; }
+        body { background-color: var(--bg); color: #D1D1D1; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; scroll-behavior: smooth; }
+        .serif-display { font-family: 'Tenor Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.3em; }
+        
+        .nav-link { font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.4; cursor: pointer; transition: 0.3s; }
+        .nav-link:hover { opacity: 1; color: white; }
+
+        /* Filter Style */
+        .filter-btn { font-size: 9px; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.3; transition: 0.4s; cursor: pointer; border-bottom: 1px solid transparent; padding-bottom: 4px; }
+        .filter-btn.active { opacity: 1; border-color: var(--gold); color: var(--gold); }
+
+        /* Portfolio Grid Style */
+        .porto-item { position: relative; aspect-ratio: 4/5; overflow: hidden; background: #111; cursor: pointer; }
+        
+        /* Effect B&W ke Berwarna */
+        .porto-img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            filter: grayscale(100%); 
+            transition: filter 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 1.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            opacity: 0.8;
+        }
+        .porto-item:hover .porto-img { 
+            filter: grayscale(0%); 
+            opacity: 1; 
+            transform: scale(1.05); 
+        }
+
+        /* Overlay Button (Hanya muncul saat Hover) */
+        .demo-overlay { 
+            position: absolute; 
+            inset: 0; 
+            background: rgba(0,0,0,0.3); 
+            opacity: 0; 
+            transition: 0.5s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 10; 
+            backdrop-filter: blur(2px);
+        }
+        .porto-item:hover .demo-overlay { opacity: 1; }
+        .btn-view { border: 1px solid white; color: white; padding: 12px 24px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.2em; transition: 0.3s; }
+        .btn-view:hover { background: white; color: black; }
+
+        /* Bottom Info (Foto & Tahun) */
+        .year-label { font-size: 10px; font-weight: 700; color: var(--gold); opacity: 0.8; letter-spacing: 0.1em; }
+        .title-label { font-size: 10px; color: white; letter-spacing: 0.2em; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+    <nav class="fixed top-0 w-full z-[100] px-6 py-8 flex justify-between items-center mix-blend-difference">
+        <div class="serif-display text-lg text-white font-bold tracking-[0.5em] cursor-pointer" onclick="location.href='index.html'">RELISN</div>
+        <div class="flex items-center gap-8">
+            <div class="hidden md:flex gap-8 items-center">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="index.html#catalog-preview" class="nav-link">Catalog</a>
+                <a href="all-portfolio.html" class="nav-link !opacity-100">Portfolio</a>
+                <a href="track-order.html" class="nav-link text-amber-500 opacity-100">Track Order</a>
+            </div>
+            <a href="bag.html" class="nav-link">Bag</a>
+        </div>
+    </nav>
+
+    <header class="pt-48 pb-20 px-6 text-center">
+        <h1 class="serif-display text-3xl md:text-4xl text-white mb-6">Works Archive</h1>
+        <div class="w-12 h-[1px] bg-amber-500 mx-auto mb-6"></div>
+    </header>
+
+    <section class="mb-20 px-6">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-center gap-10">
+            <span class="filter-btn active" onclick="filterPorto('all', this)">All Projects</span>
+            <span class="filter-btn" onclick="filterPorto('Static', this)">Static</span>
+            <span class="filter-btn" onclick="filterPorto('Interactive', this)">Interactive</span>
+            <span class="filter-btn" onclick="filterPorto('Multi-Page', this)">Multi-Page</span>
+        </div>
+    </section>
+
+    <section class="px-6 pb-40">
+        <div id="porto-full-grid" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-16 gap-x-8">
+            <p class="col-span-full text-center py-20 opacity-20 text-[9px] uppercase tracking-[0.5em]">Synchronizing Archive...</p>
+        </div>
+    </section>
+
+    <footer class="py-20 bg-[#030303] border-t border-white/5 text-center px-6">
+        <div class="serif-display text-white text-lg tracking-[0.4em] font-bold mb-4">RELISN</div>
+        <p class="text-[8px] opacity-20 uppercase tracking-[0.3em]">&copy; 2025 RELISN STUDIO. ALL RIGHTS RESERVED.</p>
+    </footer>
+
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxOvrvbDtlEMHVK2Syn_LOiJ1OCEzs_M4AoqBZ_G7e7NFfx0-vVqNHK76tfMGyp8vlmNw/exec";
+        let allData = [];
+
+      async function fetchAllPortfolio() {
+    const container = document.getElementById('porto-grid');
+    try {
+        const res = await fetch(SCRIPT_URL + "?target=portfolio");
+        const data = await res.json();
+        
+        if (data && data.length > 1) {
+            const allData = data.slice(1).reverse();
+            container.innerHTML = allData.map(item => `
+                <div class="group">
+                    <div class="porto-item mb-4" onclick="window.open('${item[4]}', '_blank')">
+                        <img src="${item[3]}" class="porto-img" style="filter: grayscale(100%); transition: 1s;" onmouseover="this.style.filter='grayscale(0%)'" onmouseout="this.style.filter='grayscale(100%)'" loading="lazy">
+                        <div class="demo-overlay">
+                            <div class="btn-view">Launch Project</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center px-1">
+                        <span class="title-label serif-display">${item[1]}</span>
+                        <span class="year-label opacity-40 text-[10px]">${item[2]}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (e) {
+        console.error("Error:", e);
+    }
+}
+                container.innerHTML = "<p class='col-span-full text-center opacity-20 text-[9px] uppercase'>Connection Standby...</p>";
+            }
+        }
+
+        function renderPorto(items) {
+            const container = document.getElementById('porto-full-grid');
+            container.innerHTML = items.map(item => {
+                // Asumsi: item[1] = Judul, item[2] = Link Gambar, item[5] = Tahun (Jika ada, atau ganti indexnya)
+                const year = item[5] || "2025"; 
+                return `
+                <div class="group">
+                    <div class="porto-item mb-4" onclick="location.href='portfolio-gallery.html?project=${encodeURIComponent(item[1])}'">
+                        <img src="${item[2]}" class="porto-img" loading="lazy">
+                        <div class="demo-overlay">
+                            <div class="btn-view">View Project</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center px-1">
+                        <span class="title-label serif-display">${item[1]}</span>
+                        <span class="year-label">${year}</span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function filterPorto(category, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (category === 'all') {
+                renderPorto(allData);
+            } else {
+                const filtered = allData.filter(item => item[4] === category);
+                renderPorto(filtered);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchAllPortfolio);
+    </script>
+</body>
+</html>

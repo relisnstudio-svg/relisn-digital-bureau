@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RELISN | Project Bag</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=AQE4CQhcqhbgnewCL0MuBdx8FXs0JCYK2BrS5hYBUwqktZCYHJILvCuGnYvUcZPyeX1Jg1381Nm3Rcqa&currency=USD"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;700&family=Tenor+Sans&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #080808; --gold: #f59e0b; }
+        body { background-color: var(--bg); color: #D1D1D1; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .serif { font-family: 'Tenor Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.3em; }
+        .card-item { background: #0E0E0E; border: 1px solid rgba(255,255,255,0.05); padding: 30px; margin-bottom: 15px; }
+        .btn-checkout { background: var(--gold); color: black; font-weight: bold; width: 100%; padding: 20px; text-transform: uppercase; letter-spacing: 0.2em; font-size: 11px; transition: 0.3s; }
+        .btn-checkout:hover { background: #d97706; }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+
+    <div class="max-w-5xl mx-auto flex justify-between items-center mb-16 border-b border-white/5 pb-8">
+        <h1 class="serif text-xl">Project <span class="text-amber-500">Bag</span></h1>
+        <a href="index.html" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition">Back to Atelier</a>
+    </div>
+
+    <div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div class="lg:col-span-2">
+            <div id="cart-list" class="space-y-4">
+                </div>
+            <div id="empty-msg" class="hidden py-20 text-center opacity-20 serif text-xs">Bag is empty</div>
+        </div>
+
+        <div class="lg:col-span-1">
+            <div class="sticky top-12 bg-[#0E0E0E] p-8 border border-white/5">
+                <h2 class="serif text-xs mb-8 border-b border-white/5 pb-4">Order Summary</h2>
+                
+                <div class="space-y-4 mb-8">
+                    <div class="flex justify-between text-[10px] uppercase tracking-widest">
+                        <span class="opacity-50">Total Projects</span>
+                        <span id="summary-count">0</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-light text-white pt-4 border-t border-white/5">
+                        <span class="serif text-[10px] self-center">Total Investment</span>
+                        <span id="summary-total">0</span>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <label class="text-[8px] uppercase tracking-widest opacity-30 block mb-2">Referral / Agent Code</label>
+                    <div class="flex gap-2">
+                        <input id="voucher-input" class="bg-[#151515] border border-white/5 p-3 text-[10px] text-white w-full outline-none focus:border-amber-500 transition" placeholder="ENTER CODE">
+                        <button onclick="applyVoucher()" class="bg-white/5 px-4 text-[9px] font-bold hover:bg-white/10 transition">APPLY</button>
+                    </div>
+                    <p id="voucher-status" class="text-[8px] text-amber-500 mt-2 tracking-widest font-bold"></p>
+                </div>
+
+                <div id="payment-gate" class="space-y-3">
+                    <button id="btn-wa" onclick="checkoutWA()" class="btn-checkout">Checkout via WhatsApp</button>
+                    <div id="paypal-button-container" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem('relisn_cart')) || [];
+        let currentCurrency = "IDR";
+        let agentCode = "-";
+
+        function renderCart() {
+            const list = document.getElementById('cart-list');
+            const empty = document.getElementById('empty-msg');
+            const summaryCount = document.getElementById('summary-count');
+            const summaryTotal = document.getElementById('summary-total');
+
+            if (cart.length === 0) {
+                list.innerHTML = "";
+                empty.classList.remove('hidden');
+                document.getElementById('payment-gate').classList.add('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            document.getElementById('payment-gate').classList.remove('hidden');
+            
+            let totalVal = 0;
+            currentCurrency = cart[0].price.includes("IDR") ? "IDR" : "USD";
+
+            list.innerHTML = cart.map((item, index) => {
+                // Bersihkan string harga untuk kalkulasi
+                const numericPrice = parseInt(item.price.replace(/[^0-9]/g, ''));
+                totalVal += numericPrice;
+
+                return `
+                <div class="card-item group">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[8px] text-amber-500 font-bold tracking-[0.3em] mb-2 uppercase">ARCHITECTURE</p>
+                            <h3 class="serif text-lg text-white mb-2">${item.name}</h3>
+                            <p class="text-[9px] opacity-40 uppercase tracking-widest leading-relaxed max-w-sm">${item.details}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-white font-light mb-4">${item.price}</p>
+                            <button onclick="removeItem(${index})" class="text-[9px] opacity-20 group-hover:opacity-100 hover:text-red-500 transition uppercase font-bold tracking-tighter italic">Remove Item</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            summaryCount.innerText = cart.length;
+            summaryTotal.innerText = currentCurrency === "IDR" ? "IDR " + totalVal.toLocaleString() : "$" + totalVal.toLocaleString();
+
+            // Toggle Payment Method Visibility
+            if(currentCurrency === "USD") {
+                document.getElementById('btn-wa').classList.add('hidden');
+                initPayPal(totalVal);
+            } else {
+                document.getElementById('btn-wa').classList.remove('hidden');
+                document.getElementById('paypal-button-container').innerHTML = "";
+            }
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('relisn_cart', JSON.stringify(cart));
+            renderCart();
+        }
+
+        function applyVoucher() {
+            const input = document.getElementById('voucher-input').value.toUpperCase();
+            if(input.length > 2) {
+                agentCode = input;
+                document.getElementById('voucher-status').innerText = "AGENT CODE: " + agentCode + " APPLIED";
+            }
+        }
+
+        function checkoutWA() {
+            const total = document.getElementById('summary-total').innerText;
+            const orderList = cart.map(i => `• ${i.name} (${i.price})`).join('%0A');
+            const message = `Halo Relisn! Saya ingin melakukan pemesanan:%0A%0A${orderList}%0A%0ATotal Investment: ${total}%0A%0AAgent Code: ${agentCode}`;
+            window.location.href = `https://wa.me/6282114777085?text=${message}`;
+        }
+
+        function initPayPal(amount) {
+            document.getElementById('paypal-button-container').innerHTML = "";
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{ amount: { value: amount.toString() } }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        alert('Transaction completed by ' + details.payer.name.given_name);
+                        localStorage.removeItem('relisn_cart');
+                        window.location.href = "success.html";
+                    });
+                }
+            }).render('#paypal-button-container');
+        }
+
+        window.onload = renderCart;
+    </script>
+</body>
+</html>

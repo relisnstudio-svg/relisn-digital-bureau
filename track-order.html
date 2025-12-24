@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RELISN | Project Tracking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;700&family=Tenor+Sans&display=swap" rel="stylesheet">
+    <style>
+        body { background: #080808; color: white; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; }
+        .serif { font-family: 'Tenor Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.3em; }
+        
+        /* Nav Style untuk Track Order */
+        .nav-track { position: fixed; top: 0; left: 0; width: 100%; padding: 30px 40px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .logo-home { font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; opacity: 0.5; }
+        .logo-home:hover { opacity: 1; letter-spacing: 0.5em; }
+
+        .progress-line { height: 1px; background: rgba(255,255,255,0.05); position: relative; overflow: hidden; }
+        .progress-fill { height: 100%; background: #f59e0b; transition: 2s cubic-bezier(0.2, 0, 0.2, 1); width: 0%; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+        .glass-panel { background: #0E0E0E; border: 1px solid rgba(255,255,255,0.05); padding: 50px 40px; }
+        
+        input { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 15px 0; width: 100%; outline: none; transition: 0.5s; font-size: 18px; letter-spacing: 0.2em; text-transform: uppercase; text-align: center; color: white; }
+        input:focus { border-color: #f59e0b; }
+        
+        .btn-action { border: 1px solid rgba(255,255,255,0.1); padding: 18px; text-align: center; font-weight: 700; font-size: 9px; uppercase tracking-[0.2em] transition: 0.4s; display: block; }
+        .btn-action:hover { border-color: #f59e0b; color: #f59e0b; }
+        .btn-final { background: white; color: black; border: none; }
+        .btn-final:hover { background: #f59e0b; color: black; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+
+    <header class="nav-track">
+        <div class="logo-home serif" onclick="location.href='index.html'">RELISN</div>
+        <a href="index.html" class="opacity-20 hover:opacity-100 transition text-[10px] font-bold tracking-widest uppercase">✕ Close</a>
+    </header>
+
+    <div class="max-w-xl w-full mt-10">
+        <div id="input-section" class="text-center">
+            <h1 class="serif text-[10px] opacity-30 mb-12 tracking-[0.5em]">Project Authentication</h1>
+            <input type="text" id="track-id" class="mb-10" placeholder="ENTER PROJECT ID (RLN-XXXX)" autocomplete="off">
+            <button id="btn-locate" onclick="trackProject()" class="w-full bg-white text-black font-bold py-5 text-[9px] tracking-widest uppercase hover:bg-amber-500 transition duration-500">Locate Project</button>
+            <p class="text-[8px] opacity-20 uppercase mt-8 tracking-[0.3em]">Authorized access only</p>
+        </div>
+
+        <div id="result-section" class="hidden">
+            <div class="glass-panel relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-5 text-[40px] font-bold serif" id="bg-id"></div>
+
+                <div class="flex justify-between items-start mb-16 relative z-10">
+                    <div>
+                        <p class="text-[8px] opacity-30 uppercase tracking-[0.3em] mb-2 font-bold">Client Identity</p>
+                        <h2 class="serif text-xl italic text-white" id="display-name"></h2>
+                        <p class="text-[9px] opacity-50 mt-1" id="display-id"></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[8px] opacity-30 uppercase tracking-[0.3em] mb-2 font-bold">Live Status</p>
+                        <span class="text-[9px] text-amber-500 font-bold uppercase tracking-[0.15em]" id="display-status"></span>
+                    </div>
+                </div>
+
+                <div class="mb-16">
+                    <div class="flex justify-between text-[8px] uppercase opacity-20 mb-6 font-bold tracking-[0.2em]">
+                        <span id="step-1">Waiting DP</span>
+                        <span id="step-2">Development</span>
+                        <span id="step-3">Handover</span>
+                    </div>
+                    <div class="progress-line">
+                        <div id="bar" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4" id="action-container">
+                    <a id="demo-btn" href="#" target="_blank" class="hidden btn-action">View Live Preview (Demo)</a>
+                    <a id="handover-btn" href="#" target="_blank" class="hidden btn-action btn-final text-black">Access Final Handover</a>
+                </div>
+
+                <div id="status-note" class="text-[8px] opacity-20 uppercase mt-10 text-center tracking-[0.2em] leading-loose">
+                    Data synced with Relisn Cloud Servers.
+                </div>
+            </div>
+            
+            <button onclick="location.reload()" class="w-full mt-10 text-[8px] opacity-20 hover:opacity-100 uppercase font-bold tracking-[0.4em] transition">← Terminate Session</button>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOvrvbDtlEMHVK2Syn_LOiJ1OCEzs_M4AoqBZ_G7e7NFfx0-vVqNHK76tfMGyp8vlmNw/exec";
+
+        async function trackProject() {
+            const id = document.getElementById('track-id').value.trim().toUpperCase();
+            const btn = document.getElementById('btn-locate');
+            
+            if(!id) return alert("Please enter a Project ID.");
+            
+            btn.innerText = "AUTHENTICATING...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(SCRIPT_URL + "?target=orders");
+                const allData = await response.json();
+                
+                const projectRow = allData.find(row => row[1] === id);
+
+                if(projectRow) {
+                    document.getElementById('input-section').classList.add('hidden');
+                    document.getElementById('result-section').classList.remove('hidden');
+                    
+                    const clientName = projectRow[3];
+                    const status = (projectRow[6] || "PENDING").toUpperCase();
+                    const linkHandover = projectRow[8] || "#";
+
+                    document.getElementById('display-name').innerText = clientName;
+                    document.getElementById('display-id').innerText = id;
+                    document.getElementById('bg-id').innerText = id;
+                    document.getElementById('display-status').innerText = status;
+
+                    let progressWidth = "5%";
+                    let note = "Awaiting initial deposit to start the project.";
+
+                    // Sync Status Logic
+                    if(status.includes("PENDING")) {
+                        progressWidth = "10%";
+                        note = "Waiting for initial 50% deposit confirmation.";
+                    } else if(status.includes("PAID") || status.includes("DP")) {
+                        progressWidth = "35%";
+                        note = "Payment confirmed. Project entered into development queue.";
+                    } else if(status.includes("PROGRESS")) {
+                        progressWidth = "65%";
+                        note = "Your project is currently being handcrafted by our team.";
+                    } else if(status.includes("DEMO")) {
+                        progressWidth = "85%";
+                        note = "Initial build complete. Please review the live preview below.";
+                        document.getElementById('demo-btn').classList.remove('hidden');
+                        document.getElementById('demo-btn').href = linkHandover;
+                    } else if(status.includes("COMPLETED") || status.includes("HANDOVER")) {
+                        progressWidth = "100%";
+                        note = "Project complete. All assets have been released.";
+                        document.getElementById('handover-btn').classList.remove('hidden');
+                        document.getElementById('handover-btn').href = linkHandover;
+                    }
+
+                    setTimeout(() => {
+                        document.getElementById('bar').style.width = progressWidth;
+                    }, 400);
+                    document.getElementById('status-note').innerText = note;
+
+                } else {
+                    alert("ACCESS DENIED: Project ID not found.");
+                    btn.innerText = "Locate Project";
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Cloud Sync Error. Please try again.");
+                btn.innerText = "Locate Project";
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('track-id').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') trackProject();
+        });
+    </script>
+</body>
+</html>

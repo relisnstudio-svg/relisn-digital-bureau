@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RELISN | Interactive Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;700&family=Tenor+Sans&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #080808; --gold: #f59e0b; --card: #0E0E0E; }
+        body { background: var(--bg); color: #D1D1D1; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+        .serif { font-family: 'Tenor Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.3em; }
+        
+        /* Animasi BNW ke Warna - Tetap Dipertahankan */
+        .product-img { filter: grayscale(100%); transition: 1s cubic-bezier(0.2, 1, 0.3, 1); opacity: 0.6; }
+        .product-card:hover .product-img { filter: grayscale(0%); transform: scale(1.05); opacity: 1; }
+        .product-card { background: #0A0A0A; border: 1px solid rgba(255,255,255,0.03); transition: 0.5s; }
+        
+        .modal-blur { backdrop-filter: blur(20px); background: rgba(0,0,0,0.8); }
+        .input-dark { background: #111; border: 1px solid #222; color: white; padding: 10px; border-radius: 4px; outline: none; width: 100%; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="p-6">
+
+    <div class="max-w-7xl mx-auto flex justify-between items-center mb-16 border-b border-white/5 pb-8">
+        <h1 class="serif text-xl tracking-[0.5em]">Interactive <span class="text-amber-500">Catalog</span></h1>
+        <div class="flex gap-8 text-[9px] uppercase tracking-widest">
+            <a href="bag.html" class="hover:text-amber-500">Bag (<span id="bag-count">0</span>)</a>
+            <a href="index.html" class="opacity-40">Exit</a>
+        </div>
+    </div>
+
+    <div id="product-grid" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
+
+    <div id="product-modal" class="fixed inset-0 modal-blur hidden items-center justify-center p-4 z-50">
+        <div class="bg-[#0E0E0E] border border-white/10 max-w-4xl w-full flex flex-col md:flex-row overflow-hidden rounded-sm">
+            <div class="md:w-1/2 h-64 md:h-auto bg-zinc-900 relative">
+                <img id="modal-img" src="" class="w-full h-full object-cover">
+                <a id="modal-demo" href="#" target="_blank" class="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md py-3 text-[9px] text-center font-bold tracking-widest hover:bg-white hover:text-black transition">VIEW LIVE DEMO</a>
+            </div>
+            
+            <div class="md:w-1/2 p-10 relative">
+                <button onclick="closeModal()" class="absolute top-6 right-6 text-xl opacity-20 hover:opacity-100">&times;</button>
+                <p id="modal-cat" class="text-[9px] text-amber-500 font-bold uppercase tracking-[0.3em] mb-2"></p>
+                <h2 id="modal-title" class="serif text-2xl mb-6"></h2>
+                
+                <div class="space-y-4 mb-10">
+                    <div>
+                        <label class="text-[8px] uppercase opacity-30 block mb-2">Delivery Method</label>
+                        <select id="method-select" onchange="updateModalPrice()" class="input-dark text-[10px]">
+                            <option value="source">Source Only (Files Only)</option>
+                            <option value="setup">Setup Only (Files + Setup)</option>
+                            <option value="full">Full Deployment (Ready to Use)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[8px] uppercase opacity-30 block mb-1">Total Investment</label>
+                        <p id="modal-price" class="text-xl font-light text-white"></p>
+                    </div>
+                    <div id="req-container" class="hidden">
+                        <label class="text-[8px] uppercase opacity-30 block mb-2">Requirement Note (Required)</label>
+                        <textarea id="req-bar" class="input-dark text-[11px] h-20" placeholder="Hosting details, credentials, or specific requests..."></textarea>
+                    </div>
+                </div>
+
+                <button onclick="goToAddons()" class="w-full bg-amber-500 text-black py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-amber-600 transition">Buy Architecture</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addon-modal" class="fixed inset-0 modal-blur hidden items-center justify-center p-4 z-[60]">
+        <div class="bg-[#0E0E0E] border border-white/10 max-w-md w-full p-8">
+            <h2 class="serif text-lg mb-4 text-amber-500">Enhancements</h2>
+            <p class="text-[10px] opacity-50 mb-6 uppercase tracking-wider">Select optional services to include.</p>
+            <div class="space-y-3 mb-8">
+                <label class="flex items-center justify-between p-4 border border-white/5 rounded hover:bg-white/5 cursor-pointer">
+                    <span class="text-[10px] uppercase tracking-widest">Gmail Business Setup</span>
+                    <input type="checkbox" id="addon-gmail" class="accent-amber-500">
+                </label>
+                <label class="flex items-center justify-between p-4 border border-white/5 rounded hover:bg-white/5 cursor-pointer">
+                    <span class="text-[10px] uppercase tracking-widest">Custom Domain (.com)</span>
+                    <input type="checkbox" id="addon-domain" class="accent-amber-500">
+                </label>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="finalAddToBag(false)" class="flex-1 border border-white/10 py-3 text-[9px] font-bold uppercase tracking-widest opacity-50 hover:opacity-100">Skip</button>
+                <button onclick="finalAddToBag(true)" class="flex-1 bg-white text-black py-3 text-[9px] font-bold uppercase tracking-widest">Add & Bag</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOvrvbDtlEMHVK2Syn_LOiJ1OCEzs_M4AoqBZ_G7e7NFfx0-vVqNHK76tfMGyp8vlmNw/exec';
+        let allProducts = [];
+        let currentProduct = null;
+        let currentCurrency = Intl.DateTimeFormat().resolvedOptions().timeZone === "Asia/Jakarta" ? "IDR" : "USD";
+
+        async function initSystem() {
+            try {
+                const res = await fetch(SCRIPT_URL + "?target=catalog");
+                const data = await res.json();
+                // FILTER KATEGORI INTERACTIVE
+                allProducts = data.slice(1).filter(item => item[1] === "Interactive"); 
+                renderProducts();
+                updateBagCount();
+            } catch (e) { console.error("Database connection failed"); }
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = allProducts.map((p, index) => {
+                const price = currentCurrency === "IDR" ? "IDR " + Number(p[3]).toLocaleString() : "$" + p[4];
+                return `
+                <div class="product-card group cursor-pointer" onclick="openProduct(${index})">
+                    <div class="relative overflow-hidden aspect-[4/5]">
+                        <img src="${p[9]}" class="product-img w-full h-full object-cover">
+                        <div class="absolute bottom-6 left-6 right-6 flex justify-between items-end">
+                            <div>
+                                <p class="text-[8px] text-amber-500 font-bold uppercase tracking-[0.2em] mb-1">${p[1]}</p>
+                                <h3 class="serif text-sm tracking-widest text-white">${p[2]}</h3>
+                            </div>
+                            <p class="text-[10px] opacity-60">${price}</p>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function openProduct(index) {
+            currentProduct = allProducts[index];
+            document.getElementById('modal-img').src = currentProduct[9]; 
+            document.getElementById('modal-title').innerText = currentProduct[2];
+            document.getElementById('modal-cat').innerText = currentProduct[1];
+            document.getElementById('modal-demo').href = currentProduct[10] || "#"; 
+            document.getElementById('method-select').value = "source";
+            updateModalPrice();
+            document.getElementById('product-modal').classList.replace('hidden', 'flex');
+        }
+
+        function updateModalPrice() {
+            const method = document.getElementById('method-select').value;
+            let price = 0;
+            const reqContainer = document.getElementById('req-container');
+            
+            if(method === 'setup' || method === 'full') reqContainer.classList.remove('hidden');
+            else reqContainer.classList.add('hidden');
+
+            if (currentCurrency === "IDR") {
+                if(method === 'source') price = currentProduct[3];
+                if(method === 'setup') price = currentProduct[5];
+                if(method === 'full') price = currentProduct[7];
+            } else {
+                if(method === 'source') price = currentProduct[4];
+                if(method === 'setup') price = currentProduct[6];
+                if(method === 'full') price = currentProduct[8];
+            }
+            document.getElementById('modal-price').innerText = currentCurrency === "IDR" ? "IDR " + Number(price).toLocaleString() : "$" + price;
+        }
+
+        function goToAddons() {
+            const method = document.getElementById('method-select').value;
+            const note = document.getElementById('req-bar').value;
+            if((method === 'setup' || method === 'full') && !note) {
+                alert("Please provide requirement notes for this delivery method.");
+                return;
+            }
+            document.getElementById('addon-modal').classList.replace('hidden', 'flex');
+        }
+
+        function finalAddToBag(useAddons) {
+            const method = document.getElementById('method-select').value;
+            let addons = [];
+            if(useAddons) {
+                if(document.getElementById('addon-gmail').checked) addons.push("Gmail Business Setup");
+                if(document.getElementById('addon-domain').checked) addons.push("Custom Domain");
+            }
+
+            const item = {
+                id: "INT-" + Date.now(),
+                name: currentProduct[2],
+                price: document.getElementById('modal-price').innerText,
+                details: `METHOD: ${method.toUpperCase()} | NOTE: ${document.getElementById('req-bar').value || "-"} | ADDONS: ${addons.join(", ") || "None"}`,
+                currency: currentCurrency
+            };
+
+            let cart = JSON.parse(localStorage.getItem('relisn_cart')) || [];
+            cart.push(item);
+            localStorage.setItem('relisn_cart', JSON.stringify(cart));
+            
+            document.getElementById('addon-modal').classList.replace('flex', 'hidden');
+            closeModal();
+            updateBagCount();
+        }
+
+        function closeModal() { document.getElementById('product-modal').classList.replace('flex', 'hidden'); }
+        function updateBagCount() {
+            const cart = JSON.parse(localStorage.getItem('relisn_cart')) || [];
+            document.getElementById('bag-count').innerText = cart.length;
+        }
+        window.onload = initSystem;
+    </script>
+</body>
+</html>
