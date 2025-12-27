@@ -22,10 +22,10 @@
 
         .demo-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.5s; z-index: 10; }
         .portfolio-card:hover .demo-overlay { opacity: 1; }
-
-        /* Catalog Card Style */
-        .catalog-card { background: var(--card); border: 1px solid rgba(255,255,255,0.03); transition: 0.5s; position: relative; overflow: hidden; }
-        .catalog-card:hover { border-color: var(--gold); transform: translateY(-5px); }
+        
+        /* Gaya Kartu Katalog agar sinkron dengan Porto */
+        .catalog-item { background: var(--card); border: 1px solid rgba(255,255,255,0.05); transition: 0.5s; }
+        .catalog-item:hover { border-color: var(--gold); }
     </style>
 </head>
 <body>
@@ -36,7 +36,7 @@
         <div class="flex items-center gap-4 md:gap-8">
             <div class="hidden md:flex gap-8 items-center">
                 <a href="#bespoke" class="nav-link">Bespoke</a>
-                <a href="#catalog-preview" class="nav-link">Catalog</a>
+                <a href="#catalog" class="nav-link">Catalog</a>
                 <a href="#work" class="nav-link">Portfolio</a>
             </div>
 
@@ -59,50 +59,41 @@
         <div class="relative z-10">
             <p class="serif-display text-[10px] mb-6 tracking-[1em] text-amber-500">Established MMXXIV</p>
             <h1 class="serif-display text-4xl md:text-6xl text-white mb-8 leading-tight italic">Digital Architecture<br>Atelier</h1>
-            <a href="#catalog-preview" class="inline-block border border-white/20 px-10 py-4 text-[10px] uppercase tracking-[0.4em] hover:bg-white hover:text-black transition duration-500">Explore Collection</a>
+            <a href="#catalog" class="inline-block border border-white/20 px-10 py-4 text-[10px] uppercase tracking-[0.4em] hover:bg-white hover:text-black transition duration-500">Explore Collection</a>
         </div>
     </section>
 
-    <section id="bespoke" class="py-32 px-6 bg-[#050505]">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-20">
-                <h2 class="serif-display text-xs mb-4 opacity-30 tracking-[0.8em]">Bespoke Architecture</h2>
-                <p class="text-[10px] uppercase tracking-widest opacity-60">Tailor-made digital solutions for your vision</p>
+    <section id="bespoke" class="py-32 px-6">
+        <div class="max-w-7xl mx-auto text-center mb-16">
+            <h2 class="serif-display text-xs mb-4 opacity-30 tracking-[0.8em]">Bespoke Architecture</h2>
+            <div class="h-[1px] w-20 bg-amber-500 mx-auto"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
+            <div class="catalog-item p-12 text-center group cursor-pointer" onclick="location.href='bespoke.html?type=static'">
+                <h3 class="serif-display text-[11px] mb-4 text-white">Static Landing</h3>
+                <p class="text-[9px] opacity-40 uppercase tracking-widest leading-loose">High-performance single page</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="catalog-card p-10 text-center">
-                    <h3 class="serif-display text-sm mb-6 text-white">Static Landing</h3>
-                    <p class="text-[9px] opacity-50 mb-8 leading-relaxed uppercase tracking-widest">Minimalist & high performance single page architecture.</p>
-                    <button onclick="location.href='bespoke-detail.html?type=static'" class="text-[9px] text-amber-500 tracking-[0.3em] font-bold uppercase hover:text-white transition">Configure</button>
-                </div>
-                <div class="catalog-card p-10 text-center border-amber-500/20">
-                    <h3 class="serif-display text-sm mb-6 text-white">Interactive</h3>
-                    <p class="text-[9px] opacity-50 mb-8 leading-relaxed uppercase tracking-widest">Immersive experience with advanced motion & interaction.</p>
-                    <button onclick="location.href='bespoke-detail.html?type=interactive'" class="text-[9px] text-amber-500 tracking-[0.3em] font-bold uppercase hover:text-white transition">Configure</button>
-                </div>
-                <div class="catalog-card p-10 text-center">
-                    <h3 class="serif-display text-sm mb-6 text-white">Multipage</h3>
-                    <p class="text-[9px] opacity-50 mb-8 leading-relaxed uppercase tracking-widest">Complex ecosystem with integrated dynamic management.</p>
-                    <button onclick="location.href='bespoke-detail.html?type=multipage'" class="text-[9px] text-amber-500 tracking-[0.3em] font-bold uppercase hover:text-white transition">Configure</button>
-                </div>
+            <div class="catalog-item p-12 text-center group cursor-pointer border-amber-500/30" onclick="location.href='bespoke.html?type=interactive'">
+                <h3 class="serif-display text-[11px] mb-4 text-white">Interactive</h3>
+                <p class="text-[9px] opacity-40 uppercase tracking-widest leading-loose">Advanced motion experience</p>
+            </div>
+            <div class="catalog-item p-12 text-center group cursor-pointer" onclick="location.href='bespoke.html?type=multipage'">
+                <h3 class="serif-display text-[11px] mb-4 text-white">Multipage</h3>
+                <p class="text-[9px] opacity-40 uppercase tracking-widest leading-loose">Complex digital ecosystem</p>
             </div>
         </div>
     </section>
 
-    <section id="catalog-preview" class="py-32 px-6">
-        <div class="max-w-7xl mx-auto">
-            <div class="flex justify-between items-end mb-16 border-b border-white/5 pb-8">
-                <div>
-                    <h2 class="serif-display text-xs mb-2 opacity-30 tracking-[0.8em]">Ready-to-Wear</h2>
-                    <h3 class="serif-display text-xl text-white italic">Catalog Library</h3>
-                </div>
-                <a href="catalog-all.html" class="nav-link text-amber-500 opacity-100">View All</a>
+    <section id="catalog" class="py-32 px-6 bg-[#050505]">
+        <div class="max-w-7xl mx-auto flex justify-between items-end mb-16 border-b border-white/5 pb-8">
+            <div>
+                <h2 class="serif-display text-xs mb-2 opacity-30 tracking-[0.8em]">Catalog</h2>
+                <h3 class="serif-display text-lg text-white italic tracking-[0.2em]">Ready-to-Wear</h3>
             </div>
-            
-            <div id="catalog-container" class="portfolio-grid">
-                <p class="col-span-full text-center opacity-20 text-[9px] uppercase py-20">Syncing Library...</p>
-            </div>
+            <a href="catalog.html" class="nav-link text-amber-500 opacity-100">View All</a>
         </div>
+        <div id="catalog-container" class="portfolio-grid max-w-7xl mx-auto">
+            </div>
     </section>
 
     <section id="work" class="py-32 px-6">
@@ -119,47 +110,48 @@
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOvrvbDtlEMHVK2Syn_LOiJ1OCEzs_M4AoqBZ_G7e7NFfx0-vVqNHK76tfMGyp8vlmNw/exec';
 
         async function fetchData() {
+            const portoContainer = document.getElementById('portfolio-container');
+            const catContainer = document.getElementById('catalog-container');
+            
             try {
                 const response = await fetch(SCRIPT_URL + "?target=all");
                 const data = await response.json();
                 
-                // Render Catalog Preview (Ambil 3 item terbaru)
+                // Render Katalog (Ambil 3 saja untuk preview)
                 if (data.catalog && data.catalog.length > 1) {
-                    const catalogContainer = document.getElementById('catalog-container');
-                    catalogContainer.innerHTML = data.catalog.slice(1, 4).map(row => `
-                        <div class="catalog-card overflow-hidden group">
+                    catContainer.innerHTML = data.catalog.slice(1, 4).map(row => `
+                        <div class="catalog-item group overflow-hidden" onclick="location.href='catalog-detail.html?id=${row[2]}'">
                             <div class="aspect-video overflow-hidden">
-                                <img src="${row[9]}" class="w-full h-full object-cover transition duration-700 group-hover:scale-105">
+                                <img src="${row[9]}" class="w-full h-full object-cover transition duration-1000 group-hover:scale-110">
                             </div>
                             <div class="p-6">
                                 <p class="text-[8px] text-amber-500 uppercase tracking-widest mb-2">${row[1]}</p>
-                                <h4 class="serif-display text-xs text-white mb-4">${row[2]}</h4>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-[10px] text-white/50">IDR ${parseInt(row[3]).toLocaleString()}</span>
-                                    <button onclick="location.href='catalog-detail.html?id=${row[2]}'" class="text-[9px] uppercase font-bold tracking-tighter hover:text-amber-500 transition">Details</button>
-                                </div>
+                                <h4 class="serif-display text-[10px] text-white tracking-[0.1em]">${row[2]}</h4>
                             </div>
-                        </div>
-                    `).join('');
+                        </div>`).join('');
                 }
 
                 // Render Portfolio
                 if (data.portfolio && data.portfolio.length > 1) {
-                    const portoContainer = document.getElementById('portfolio-container');
-                    portoContainer.innerHTML = data.portfolio.slice(1).reverse().map(row => `
-                        <div class="portfolio-card relative aspect-[4/5] overflow-hidden group bg-[#0E0E0E]" onclick="window.open('${row[4]}', '_blank')">
-                            <img src="${row[3]}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-1000 scale-100 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/400x500'">
+                    portoContainer.innerHTML = data.portfolio.slice(1).reverse().map(row => {
+                        const name = row[1], year = row[2], img = row[3], demo = row[4];
+                        return `
+                        <div class="portfolio-card relative aspect-[4/5] overflow-hidden group bg-[#0E0E0E]" onclick="window.open('${demo}', '_blank')">
+                            <img src="${img}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-1000 scale-100 group-hover:scale-110" 
+                                 onerror="this.src='https://via.placeholder.com/400x500'">
                             <div class="demo-overlay">
                                 <div class="serif-display text-[9px] text-white border border-white px-4 py-2">View Project</div>
                             </div>
                             <div class="absolute bottom-6 left-6 z-20 text-left">
-                                <p class="serif-display text-[10px] text-white tracking-[0.2em] mb-1">${row[1]}</p>
-                                <p class="text-[8px] opacity-40 uppercase tracking-widest">${row[2]}</p>
+                                <p class="serif-display text-[10px] text-white tracking-[0.2em] mb-1">${name}</p>
+                                <p class="text-[8px] opacity-40 uppercase tracking-widest">${year}</p>
                             </div>
-                        </div>`).join('');
+                        </div>`;
+                    }).join('');
                 }
             } catch (error) {
-                console.error("Fetch Error:", error);
+                console.error("Error:", error);
+                portoContainer.innerHTML = "<p class='col-span-full text-center opacity-20 text-[9px]'>Database Offline</p>";
             }
         }
 
