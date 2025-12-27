@@ -16,13 +16,13 @@
         .btn-checkout:hover { background: #d97706; }
         .btn-checkout:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Modal Styles */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
         .modal-content { background: #0E0E0E; border: 1px solid rgba(245, 158, 11, 0.3); padding: 30px; max-width: 450px; width: 100%; border-radius: 4px; overflow-y: auto; max-height: 90vh; }
         .input-field { background: #151515; border: 1px solid #222; color: white; padding: 14px; width: 100%; margin-top: 8px; font-size: 11px; outline: none; transition: 0.3s; }
         .input-field:focus { border-color: var(--gold); }
         
         .bank-box { background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); border: 1px solid #f59e0b; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
+        .id-badge { background: #f59e0b; color: black; padding: 2px 8px; font-weight: bold; font-size: 10px; border-radius: 2px; margin-bottom: 10px; display: inline-block; }
     </style>
 </head>
 <body class="p-6 md:p-12">
@@ -63,6 +63,7 @@
     <div id="payment-modal" class="modal">
         <div class="modal-content">
             <div class="text-center mb-6">
+                <span id="display-order-id" class="id-badge">ID: GENERATING...</span>
                 <h2 class="serif text-amber-500 text-xs">Payment Instruction</h2>
                 <p class="text-[9px] opacity-40 mt-1 uppercase tracking-widest">Silahkan transfer sesuai total ke rekening berikut</p>
             </div>
@@ -97,6 +98,7 @@
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOvrvbDtlEMHVK2Syn_LOiJ1OCEzs_M4AoqBZ_G7e7NFfx0-vVqNHK76tfMGyp8vlmNw/exec';
         let cart = JSON.parse(localStorage.getItem('relisn_cart')) || [];
+        let activeOrderId = "";
 
         function renderCart() {
             const list = document.getElementById('cart-list');
@@ -150,7 +152,12 @@
             renderCart();
         }
 
-        function openPaymentModal() { document.getElementById('payment-modal').style.display = 'flex'; }
+        function openPaymentModal() { 
+            activeOrderId = "REL-" + Math.random().toString(36).substr(2, 7).toUpperCase();
+            document.getElementById('display-order-id').innerText = "ID: " + activeOrderId;
+            document.getElementById('payment-modal').style.display = 'flex'; 
+        }
+        
         function closeModal() { document.getElementById('payment-modal').style.display = 'none'; }
 
         async function confirmAndSubmit() {
@@ -164,30 +171,29 @@
             btn.innerText = "SENDING...";
             btn.disabled = true;
 
-            const orderId = "REL-" + Math.random().toString(36).substr(2, 7).toUpperCase();
             const total = document.getElementById('summary-total').innerText;
             const items = cart.map(i => i.name).join(', ');
 
             try {
-                // 1. Catat ke GSheet secara otomatis
+                // Sesuai kolom di GSheet: Order ID, Client Name, Items, Total Value, Status
                 await fetch(SCRIPT_URL, {
                     method: "POST",
                     mode: "no-cors",
                     body: JSON.stringify({
                         action: "submit_order",
-                        orderId: orderId,
+                        orderId: activeOrderId,
                         customer: `${name} (${email})`,
                         item: items,
                         total: total,
-                        currency: "IDR"
+                        currency: "IDR",
+                        status: "Paid"
                     })
                 });
 
-                // 2. Format Email Auto-Fill
-                const subject = `[ORDER ${orderId}] Payment Confirmation - ${name}`;
-                const body = `Halo Admin,\n\nSaya telah melakukan transfer untuk order ID: ${orderId}\n\nClient: ${name}\nTotal: ${total}\nItems: ${items}\n\n*Bukti transfer sudah saya lampirkan di email ini.*`;
+                const subject = `[ORDER ${activeOrderId}] Payment Confirmation - ${name}`;
+                const body = `Halo Admin,\n\nSaya telah melakukan transfer untuk order ID: ${activeOrderId}\n\nClient: ${name}\nTotal: ${total}\nItems: ${items}\n\n*Bukti transfer sudah saya lampirkan di email ini.*`;
                 
-                alert("Data tersimpan! Harap lampirkan (attach) foto bukti bayar pada aplikasi email yang akan terbuka.");
+                alert("Data tersimpan dengan ID: " + activeOrderId + ". Harap lampirkan foto bukti bayar pada email.");
                 
                 window.location.href = `mailto:relisn@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
@@ -197,6 +203,7 @@
             } catch (e) {
                 alert("Gagal kirim data.");
                 btn.disabled = false;
+                btn.innerText = "Confirm & Send Email";
             }
         }
 
@@ -207,7 +214,15 @@
                     return actions.order.capture().then(details => {
                         fetch(SCRIPT_URL, { 
                             method: "POST", mode: "no-cors", 
-                            body: JSON.stringify({ action: "submit_order", orderId: "PAY-"+details.id, customer: details.payer.name.given_name, item: cart.map(i => i.name).join(','), total: "$"+amount, currency: "USD" }) 
+                            body: JSON.stringify({ 
+                                action: "submit_order", 
+                                orderId: "PAY-"+details.id, 
+                                customer: details.payer.name.given_name, 
+                                item: cart.map(i => i.name).join(','), 
+                                total: "$"+amount, 
+                                currency: "USD",
+                                status: "Paid"
+                            }) 
                         });
                         localStorage.removeItem('relisn_cart');
                         window.location.href = "success.html";
