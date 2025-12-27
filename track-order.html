@@ -9,20 +9,15 @@
     <style>
         body { background: #080808; color: white; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; }
         .serif { font-family: 'Tenor Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.3em; }
-        
-        /* Nav Style untuk Track Order */
         .nav-track { position: fixed; top: 0; left: 0; width: 100%; padding: 30px 40px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
         .logo-home { font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; opacity: 0.5; }
         .logo-home:hover { opacity: 1; letter-spacing: 0.5em; }
-
         .progress-line { height: 1px; background: rgba(255,255,255,0.05); position: relative; overflow: hidden; }
         .progress-fill { height: 100%; background: #f59e0b; transition: 2s cubic-bezier(0.2, 0, 0.2, 1); width: 0%; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
         .glass-panel { background: #0E0E0E; border: 1px solid rgba(255,255,255,0.05); padding: 50px 40px; }
-        
         input { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 15px 0; width: 100%; outline: none; transition: 0.5s; font-size: 18px; letter-spacing: 0.2em; text-transform: uppercase; text-align: center; color: white; }
         input:focus { border-color: #f59e0b; }
-        
-        .btn-action { border: 1px solid rgba(255,255,255,0.1); padding: 18px; text-align: center; font-weight: 700; font-size: 9px; uppercase tracking-[0.2em] transition: 0.4s; display: block; }
+        .btn-action { border: 1px solid rgba(255,255,255,0.1); padding: 18px; text-align: center; font-weight: 700; font-size: 9px; text-transform: uppercase; tracking-widest: 0.2em; transition: 0.4s; display: block; text-decoration: none; color: white; }
         .btn-action:hover { border-color: #f59e0b; color: #f59e0b; }
         .btn-final { background: white; color: black; border: none; }
         .btn-final:hover { background: #f59e0b; color: black; }
@@ -38,7 +33,7 @@
     <div class="max-w-xl w-full mt-10">
         <div id="input-section" class="text-center">
             <h1 class="serif text-[10px] opacity-30 mb-12 tracking-[0.5em]">Project Authentication</h1>
-            <input type="text" id="track-id" class="mb-10" placeholder="ENTER PROJECT ID (RLN-XXXX)" autocomplete="off">
+            <input type="text" id="track-id" class="mb-10" placeholder="ENTER PROJECT ID (REL-XXXX)" autocomplete="off">
             <button id="btn-locate" onclick="trackProject()" class="w-full bg-white text-black font-bold py-5 text-[9px] tracking-widest uppercase hover:bg-amber-500 transition duration-500">Locate Project</button>
             <p class="text-[8px] opacity-20 uppercase mt-8 tracking-[0.3em]">Authorized access only</p>
         </div>
@@ -61,9 +56,9 @@
 
                 <div class="mb-16">
                     <div class="flex justify-between text-[8px] uppercase opacity-20 mb-6 font-bold tracking-[0.2em]">
-                        <span id="step-1">Waiting DP</span>
-                        <span id="step-2">Development</span>
-                        <span id="step-3">Handover</span>
+                        <span>Payment</span>
+                        <span>Development</span>
+                        <span>Handover</span>
                     </div>
                     <div class="progress-line">
                         <div id="bar" class="progress-fill"></div>
@@ -72,7 +67,7 @@
 
                 <div class="grid grid-cols-1 gap-4" id="action-container">
                     <a id="demo-btn" href="#" target="_blank" class="hidden btn-action">View Live Preview (Demo)</a>
-                    <a id="handover-btn" href="#" target="_blank" class="hidden btn-action btn-final text-black">Access Final Handover</a>
+                    <a id="handover-btn" href="#" target="_blank" class="hidden btn-action btn-final">Access Final Handover</a>
                 </div>
 
                 <div id="status-note" class="text-[8px] opacity-20 uppercase mt-10 text-center tracking-[0.2em] leading-loose">
@@ -85,6 +80,7 @@
     </div>
 
     <script>
+        // SCRIPT_URL harus sama dengan yang ada di admin & bag
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOvrvbDtlEMHVK2Syn_LOiJ1OCEzs_M4AoqBZ_G7e7NFfx0-vVqNHK76tfMGyp8vlmNw/exec";
 
         async function trackProject() {
@@ -97,18 +93,23 @@
             btn.disabled = true;
 
             try {
-                const response = await fetch(SCRIPT_URL + "?target=orders");
-                const allData = await response.json();
+                // Menggunakan target=all karena GScript Anda hanya merespon target=all
+                const response = await fetch(SCRIPT_URL + "?target=all");
+                const data = await response.json();
                 
-                const projectRow = allData.find(row => row[1] === id);
+                // Cari di baris orders (data.orders)
+                const projectRow = data.orders.find(row => row[1] === id);
 
                 if(projectRow) {
                     document.getElementById('input-section').classList.add('hidden');
                     document.getElementById('result-section').classList.remove('hidden');
                     
+                    // Index Kolom Berdasarkan image_4abf41.png:
+                    // 1: Order ID, 3: Client Name, 6: Status, 7: Request/Demo, 8: Handover
                     const clientName = projectRow[3];
-                    const status = (projectRow[6] || "PENDING").toUpperCase();
-                    const linkHandover = projectRow[8] || "#";
+                    const status = (projectRow[6] || "PAID").toUpperCase();
+                    const linkDemo = projectRow[7] || "";
+                    const linkHandover = projectRow[8] || "";
 
                     document.getElementById('display-name').innerText = clientName;
                     document.getElementById('display-id').innerText = id;
@@ -116,28 +117,29 @@
                     document.getElementById('display-status').innerText = status;
 
                     let progressWidth = "5%";
-                    let note = "Awaiting initial deposit to start the project.";
+                    let note = "Awaiting development schedule.";
 
-                    // Sync Status Logic
-                    if(status.includes("PENDING")) {
-                        progressWidth = "10%";
-                        note = "Waiting for initial 50% deposit confirmation.";
-                    } else if(status.includes("PAID") || status.includes("DP")) {
-                        progressWidth = "35%";
-                        note = "Payment confirmed. Project entered into development queue.";
+                    // Logika Progress Bar
+                    if(status.includes("PAID")) {
+                        progressWidth = "20%";
+                        note = "Payment confirmed. Project in queue.";
                     } else if(status.includes("PROGRESS")) {
-                        progressWidth = "65%";
-                        note = "Your project is currently being handcrafted by our team.";
-                    } else if(status.includes("DEMO")) {
-                        progressWidth = "85%";
-                        note = "Initial build complete. Please review the live preview below.";
-                        document.getElementById('demo-btn').classList.remove('hidden');
-                        document.getElementById('demo-btn').href = linkHandover;
-                    } else if(status.includes("COMPLETED") || status.includes("HANDOVER")) {
+                        progressWidth = "50%";
+                        note = "Your project is currently being handcrafted.";
+                    } else if(status.includes("REVIEW") || status.includes("DEMO")) {
+                        progressWidth = "80%";
+                        note = "Development complete. Review your demo below.";
+                        if(linkDemo && linkDemo !== "") {
+                            document.getElementById('demo-btn').classList.remove('hidden');
+                            document.getElementById('demo-btn').href = linkDemo;
+                        }
+                    } else if(status.includes("HANDOVERED") || status.includes("COMPLETED")) {
                         progressWidth = "100%";
-                        note = "Project complete. All assets have been released.";
-                        document.getElementById('handover-btn').classList.remove('hidden');
-                        document.getElementById('handover-btn').href = linkHandover;
+                        note = "Project complete. Access your assets below.";
+                        if(linkHandover && linkHandover !== "") {
+                            document.getElementById('handover-btn').classList.remove('hidden');
+                            document.getElementById('handover-btn').href = linkHandover;
+                        }
                     }
 
                     setTimeout(() => {
@@ -152,7 +154,7 @@
                 }
             } catch (error) {
                 console.error(error);
-                alert("Cloud Sync Error. Please try again.");
+                alert("Cloud Sync Error. Please check your connection.");
                 btn.innerText = "Locate Project";
                 btn.disabled = false;
             }
