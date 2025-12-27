@@ -14,6 +14,15 @@
         .card-item { background: #0E0E0E; border: 1px solid rgba(255,255,255,0.05); padding: 30px; margin-bottom: 15px; }
         .btn-checkout { background: var(--gold); color: black; font-weight: bold; width: 100%; padding: 20px; text-transform: uppercase; letter-spacing: 0.2em; font-size: 11px; transition: 0.3s; cursor: pointer; border: none; }
         .btn-checkout:hover { background: #d97706; }
+        .btn-checkout:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
+        .modal-content { background: #0E0E0E; border: 1px solid rgba(245, 158, 11, 0.3); padding: 30px; max-width: 450px; width: 100%; border-radius: 4px; overflow-y: auto; max-height: 90vh; }
+        .input-field { background: #151515; border: 1px solid #222; color: white; padding: 14px; width: 100%; margin-top: 8px; font-size: 11px; outline: none; transition: 0.3s; }
+        .input-field:focus { border-color: var(--gold); }
+        
+        .bank-box { background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); border: 1px solid #f59e0b; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
     </style>
 </head>
 <body class="p-6 md:p-12">
@@ -32,9 +41,8 @@
         <div class="lg:col-span-1">
             <div class="sticky top-12 bg-[#0E0E0E] p-8 border border-white/5">
                 <h2 class="serif text-xs mb-8 border-b border-white/5 pb-4">Order Summary</h2>
-                
                 <div class="space-y-4 mb-8">
-                    <div class="flex justify-between text-[10px] uppercase tracking-widest">
+                    <div class="flex justify-between text-[10px] uppercase tracking-widest text-white">
                         <span class="opacity-50">Total Projects</span>
                         <span id="summary-count">0</span>
                     </div>
@@ -44,63 +52,81 @@
                     </div>
                 </div>
 
-                <div class="mb-8">
-                    <label class="text-[8px] uppercase tracking-widest opacity-30 block mb-2">Referral / Agent Code</label>
-                    <div class="flex gap-2">
-                        <input id="voucher-input" class="bg-[#151515] border border-white/5 p-3 text-[10px] text-white w-full outline-none focus:border-amber-500 transition" placeholder="ENTER CODE">
-                        <button onclick="applyVoucher()" class="bg-white/5 px-4 text-[9px] font-bold hover:bg-white/10 transition">APPLY</button>
-                    </div>
-                    <p id="voucher-status" class="text-[8px] text-amber-500 mt-2 tracking-widest font-bold"></p>
-                </div>
-
                 <div id="payment-gate" class="space-y-3">
-                    <button id="btn-email" onclick="checkoutEmail()" class="btn-checkout">Checkout via Email</button>
-                    <p class="text-[8px] opacity-30 text-center mt-4 tracking-widest">Silahkan lampirkan bukti transfer pada email</p>
-                    <div id="paypal-button-container" class="mt-4"></div>
+                    <button id="btn-idr" onclick="openPaymentModal()" class="btn-checkout">Checkout (IDR)</button>
+                    <div id="paypal-button-container"></div>
                 </div>
             </div>
         </div>
     </div>
 
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <div class="text-center mb-6">
+                <h2 class="serif text-amber-500 text-xs">Payment Instruction</h2>
+                <p class="text-[9px] opacity-40 mt-1 uppercase tracking-widest">Silahkan transfer sesuai total ke rekening berikut</p>
+            </div>
+            
+            <div class="bank-box">
+                <p class="text-[8px] opacity-40 uppercase tracking-widest mb-1">SeaBank Indonesia</p>
+                <p class="text-2xl font-bold text-white tracking-[0.2em] mb-4">9011 6163 4111</p>
+                <p class="text-[8px] opacity-40 uppercase tracking-widest mb-1">Account Holder</p>
+                <p class="text-xs text-white uppercase font-bold tracking-widest">Rian Fergiawan Listanto</p>
+            </div>
+            
+            <div class="space-y-4 mb-8">
+                <div>
+                    <label class="text-[8px] uppercase tracking-widest opacity-40">Client Name / Brand</label>
+                    <input id="client-name" class="input-field" placeholder="Ex: John Doe">
+                </div>
+                <div>
+                    <label class="text-[8px] uppercase tracking-widest opacity-40">Your Email</label>
+                    <input id="client-email" class="input-field" placeholder="Ex: john@email.com">
+                </div>
+                <div>
+                    <label class="text-[8px] uppercase tracking-widest opacity-40">Upload Proof (Image)</label>
+                    <input type="file" id="client-proof" class="input-field border-dashed text-[9px]" accept="image/*">
+                </div>
+            </div>
+
+            <button onclick="confirmAndSubmit()" id="btn-confirm" class="btn-checkout">Confirm & Send Email</button>
+            <button onclick="closeModal()" class="w-full text-[8px] mt-6 opacity-30 uppercase tracking-widest hover:opacity-100 transition">Cancel Transaction</button>
+        </div>
+    </div>
+
     <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOvrvbDtlEMHVK2Syn_LOiJ1OCEzs_M4AoqBZ_G7e7NFfx0-vVqNHK76tfMGyp8vlmNw/exec';
         let cart = JSON.parse(localStorage.getItem('relisn_cart')) || [];
-        let currentCurrency = "IDR";
-        let agentCode = "-";
 
         function renderCart() {
             const list = document.getElementById('cart-list');
-            const empty = document.getElementById('empty-msg');
-            const summaryCount = document.getElementById('summary-count');
             const summaryTotal = document.getElementById('summary-total');
-
+            const summaryCount = document.getElementById('summary-count');
+            
             if (cart.length === 0) {
                 list.innerHTML = "";
-                empty.classList.remove('hidden');
+                document.getElementById('empty-msg').classList.remove('hidden');
                 document.getElementById('payment-gate').classList.add('hidden');
                 return;
             }
 
-            empty.classList.add('hidden');
-            document.getElementById('payment-gate').classList.remove('hidden');
-            
             let totalVal = 0;
-            currentCurrency = cart[0].price.includes("IDR") ? "IDR" : "USD";
+            let currentCurrency = cart[0].price.includes("IDR") ? "IDR" : "USD";
 
             list.innerHTML = cart.map((item, index) => {
                 const numericPrice = parseInt(item.price.replace(/[^0-9]/g, ''));
                 totalVal += numericPrice;
-
                 return `
                 <div class="card-item group">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-[8px] text-amber-500 font-bold tracking-[0.3em] mb-2 uppercase">ARCHITECTURE</p>
+                            <p class="text-[8px] text-amber-500 font-bold tracking-widest mb-2 uppercase">PROJECT</p>
                             <h3 class="serif text-lg text-white mb-2">${item.name}</h3>
-                            <p class="text-[9px] opacity-40 uppercase tracking-widest leading-relaxed max-w-sm">${item.details}</p>
+                            <p class="text-[9px] opacity-40 max-w-sm uppercase">${item.details}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-sm text-white font-light mb-4">${item.price}</p>
-                            <button onclick="removeItem(${index})" class="text-[9px] opacity-20 group-hover:opacity-100 hover:text-red-500 transition uppercase font-bold tracking-tighter italic">Remove Item</button>
+                            <p class="text-sm text-white mb-4">${item.price}</p>
+                            <button onclick="removeItem(${index})" class="text-[9px] text-red-500 italic opacity-20 group-hover:opacity-100 transition">Remove</button>
                         </div>
                     </div>
                 </div>`;
@@ -110,10 +136,10 @@
             summaryTotal.innerText = currentCurrency === "IDR" ? "IDR " + totalVal.toLocaleString() : "$" + totalVal.toLocaleString();
 
             if(currentCurrency === "USD") {
-                document.getElementById('btn-email').classList.add('hidden');
+                document.getElementById('btn-idr').classList.add('hidden');
                 initPayPal(totalVal);
             } else {
-                document.getElementById('btn-email').classList.remove('hidden');
+                document.getElementById('btn-idr').classList.remove('hidden');
                 document.getElementById('paypal-button-container').innerHTML = "";
             }
         }
@@ -124,43 +150,65 @@
             renderCart();
         }
 
-        function applyVoucher() {
-            const input = document.getElementById('voucher-input').value.toUpperCase();
-            if(input.length > 2) {
-                agentCode = input;
-                document.getElementById('voucher-status').innerText = "AGENT CODE: " + agentCode + " APPLIED";
+        function openPaymentModal() { document.getElementById('payment-modal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('payment-modal').style.display = 'none'; }
+
+        async function confirmAndSubmit() {
+            const name = document.getElementById('client-name').value;
+            const email = document.getElementById('client-email').value;
+            const proof = document.getElementById('client-proof').files[0];
+            const btn = document.getElementById('btn-confirm');
+
+            if(!name || !email || !proof) return alert("Lengkapi Form & Bukti Bayar!");
+
+            btn.innerText = "SENDING...";
+            btn.disabled = true;
+
+            const orderId = "REL-" + Math.random().toString(36).substr(2, 7).toUpperCase();
+            const total = document.getElementById('summary-total').innerText;
+            const items = cart.map(i => i.name).join(', ');
+
+            try {
+                // 1. Catat ke GSheet secara otomatis
+                await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: JSON.stringify({
+                        action: "submit_order",
+                        orderId: orderId,
+                        customer: `${name} (${email})`,
+                        item: items,
+                        total: total,
+                        currency: "IDR"
+                    })
+                });
+
+                // 2. Format Email Auto-Fill
+                const subject = `[ORDER ${orderId}] Payment Confirmation - ${name}`;
+                const body = `Halo Admin,\n\nSaya telah melakukan transfer untuk order ID: ${orderId}\n\nClient: ${name}\nTotal: ${total}\nItems: ${items}\n\n*Bukti transfer sudah saya lampirkan di email ini.*`;
+                
+                alert("Data tersimpan! Harap lampirkan (attach) foto bukti bayar pada aplikasi email yang akan terbuka.");
+                
+                window.location.href = `mailto:relisn@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+                localStorage.removeItem('relisn_cart');
+                setTimeout(() => { window.location.href = "index.html"; }, 1500);
+
+            } catch (e) {
+                alert("Gagal kirim data.");
+                btn.disabled = false;
             }
         }
 
-        function checkoutEmail() {
-            const total = document.getElementById('summary-total').innerText;
-            const orderList = cart.map(i => `- ${i.name} (${i.price})`).join('%0D%0A');
-            
-            const emailTujuan = "relisnstudio@gmail.com";
-            const subject = encodeURIComponent("New Order - RELISN ATELIER");
-            
-            // Menyusun isi email dengan baris baru (%0D%0A)
-            const body = encodeURIComponent(
-                `Halo RELISN,\n\nSaya ingin memesan project berikut:\n\n${cart.map(i => `- ${i.name} (${i.price})`).join('\n')}\n\nTotal Investment: ${total}\nAgent Code: ${agentCode}\n\n--- MOHON LAMPIRKAN BUKTI TRANSFER DI BAWAH INI ---`
-            ).replace(/%0A/g, '%0D%0A');
-
-            window.location.href = `mailto:${emailTujuan}?subject=${subject}&body=${body}`;
-            
-            // Optional: Kosongkan keranjang setelah klik (pembeli sudah diarahkan ke email)
-            // localStorage.removeItem('relisn_cart');
-        }
-
         function initPayPal(amount) {
-            document.getElementById('paypal-button-container').innerHTML = "";
             paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{ amount: { value: amount.toString() } }]
-                    });
-                },
+                createOrder: (data, actions) => { return actions.order.create({ purchase_units: [{ amount: { value: amount.toString() } }] }); },
                 onApprove: (data, actions) => {
                     return actions.order.capture().then(details => {
-                        alert('Transaction completed by ' + details.payer.name.given_name);
+                        fetch(SCRIPT_URL, { 
+                            method: "POST", mode: "no-cors", 
+                            body: JSON.stringify({ action: "submit_order", orderId: "PAY-"+details.id, customer: details.payer.name.given_name, item: cart.map(i => i.name).join(','), total: "$"+amount, currency: "USD" }) 
+                        });
                         localStorage.removeItem('relisn_cart');
                         window.location.href = "success.html";
                     });
