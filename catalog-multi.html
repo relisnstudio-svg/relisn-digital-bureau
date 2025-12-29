@@ -10,12 +10,9 @@
         :root { --bg: #080808; --gold: #f59e0b; --card: #0E0E0E; }
         body { background: var(--bg); color: #D1D1D1; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
         .serif { font-family: 'Tenor Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.3em; }
-        
-        /* 1. Efek BNW ke Warna untuk Gallery - Tetap Dipertahankan */
         .product-img { filter: grayscale(100%); transition: 1s cubic-bezier(0.2, 1, 0.3, 1); opacity: 0.6; }
         .product-card:hover .product-img { filter: grayscale(0%); transform: scale(1.05); opacity: 1; }
         .product-card { background: #0A0A0A; border: 1px solid rgba(255,255,255,0.03); transition: 0.5s; }
-        
         .modal-blur { backdrop-filter: blur(20px); background: rgba(0,0,0,0.8); }
         .input-dark { background: #111; border: 1px solid #222; color: white; padding: 10px; border-radius: 4px; outline: none; width: 100%; }
         .hidden { display: none; }
@@ -39,12 +36,10 @@
                 <img id="modal-img" src="" class="w-full h-full object-cover">
                 <a id="modal-demo" href="#" target="_blank" class="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md py-3 text-[9px] text-center font-bold tracking-widest hover:bg-white hover:text-black transition">VIEW LIVE DEMO</a>
             </div>
-            
             <div class="md:w-1/2 p-10 relative">
                 <button onclick="closeModal()" class="absolute top-6 right-6 text-xl opacity-20 hover:opacity-100">&times;</button>
                 <p id="modal-cat" class="text-[9px] text-amber-500 font-bold uppercase tracking-[0.3em] mb-2"></p>
                 <h2 id="modal-title" class="serif text-2xl mb-6"></h2>
-                
                 <div class="space-y-4 mb-10">
                     <div>
                         <label class="text-[8px] uppercase opacity-30 block mb-2">Delivery Method</label>
@@ -63,7 +58,6 @@
                         <textarea id="req-bar" class="input-dark text-[11px] h-20" placeholder="Hosting credentials or specific architecture brief..."></textarea>
                     </div>
                 </div>
-
                 <button onclick="goToAddons()" class="w-full bg-amber-500 text-black py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-amber-600 transition">Buy Architecture</button>
             </div>
         </div>
@@ -75,11 +69,11 @@
             <p class="text-[10px] opacity-50 mb-6 uppercase tracking-wider">Select optional services to include.</p>
             <div class="space-y-3 mb-8">
                 <label class="flex items-center justify-between p-4 border border-white/5 rounded hover:bg-white/5 cursor-pointer">
-                    <span class="text-[10px] uppercase tracking-widest">Gmail Business Setup</span>
+                    <span id="label-gmail" class="text-[10px] uppercase tracking-widest">Gmail Business Setup</span>
                     <input type="checkbox" id="addon-gmail" class="accent-amber-500">
                 </label>
                 <label class="flex items-center justify-between p-4 border border-white/5 rounded hover:bg-white/5 cursor-pointer">
-                    <span class="text-[10px] uppercase tracking-widest">Custom Domain (.com)</span>
+                    <span id="label-domain" class="text-[10px] uppercase tracking-widest">Custom Domain (.com)</span>
                     <input type="checkbox" id="addon-domain" class="accent-amber-500">
                 </label>
             </div>
@@ -94,14 +88,23 @@
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOvrvbDtlEMHVK2Syn_LOiJ1OCEzs_M4AoqBZ_G7e7NFfx0-vVqNHK76tfMGyp8vlmNw/exec';
         let allProducts = [];
         let currentProduct = null;
+        let configData = {};
         let currentCurrency = Intl.DateTimeFormat().resolvedOptions().timeZone === "Asia/Jakarta" ? "IDR" : "USD";
 
         async function initSystem() {
             try {
-                const res = await fetch(SCRIPT_URL + "?target=catalog");
-                const data = await res.json();
-                // FILTER KATEGORI MULTIPAGE
-                allProducts = data.slice(1).filter(item => item[1] === "Multipage"); 
+                // Load Catalog Data
+                const resCatalog = await fetch(SCRIPT_URL + "?target=catalog");
+                const dataCatalog = await resCatalog.json();
+                allProducts = dataCatalog.slice(1).filter(item => item[1] === "Multipage"); 
+
+                // Load Config Data (Add-ons)
+                const resConfig = await fetch(SCRIPT_URL + "?target=config");
+                const dataConfig = await resConfig.json();
+                dataConfig.forEach(row => {
+                    configData[row[0]] = row[1];
+                });
+
                 renderProducts();
                 updateBagCount();
             } catch (e) { console.error("Database connection failed"); }
@@ -134,6 +137,14 @@
             document.getElementById('modal-cat').innerText = currentProduct[1];
             document.getElementById('modal-demo').href = currentProduct[10] || "#"; 
             document.getElementById('method-select').value = "source";
+
+            // Update Label Add-on dengan harga dari Config
+            const gPrice = currentCurrency === "IDR" ? "IDR " + Number(configData['svc_gmail_idr']).toLocaleString() : "$" + configData['svc_gmail_usd'];
+            const dPrice = currentCurrency === "IDR" ? "IDR " + Number(configData['svc_domain_idr']).toLocaleString() : "$" + configData['svc_domain_usd'];
+            
+            document.getElementById('label-gmail').innerText = `Gmail Business Setup (+${gPrice})`;
+            document.getElementById('label-domain').innerText = `Custom Domain (+${dPrice})`;
+
             updateModalPrice();
             document.getElementById('product-modal').classList.replace('hidden', 'flex');
         }
@@ -171,15 +182,30 @@
         function finalAddToBag(useAddons) {
             const method = document.getElementById('method-select').value;
             let addons = [];
+            let addonTotalPrice = 0;
+
+            // Ambil harga dasar dari modal
+            let rawPriceText = document.getElementById('modal-price').innerText;
+            let basePrice = parseInt(rawPriceText.replace(/[^0-9]/g, ''));
+
             if(useAddons) {
-                if(document.getElementById('addon-gmail').checked) addons.push("Gmail Setup");
-                if(document.getElementById('addon-domain').checked) addons.push("Custom Domain");
+                if(document.getElementById('addon-gmail').checked) {
+                    addons.push("Gmail Setup");
+                    addonTotalPrice += currentCurrency === "IDR" ? Number(configData['svc_gmail_idr']) : Number(configData['svc_gmail_usd']);
+                }
+                if(document.getElementById('addon-domain').checked) {
+                    addons.push("Custom Domain");
+                    addonTotalPrice += currentCurrency === "IDR" ? Number(configData['svc_domain_idr']) : Number(configData['svc_domain_usd']);
+                }
             }
+
+            const finalPrice = basePrice + addonTotalPrice;
 
             const item = {
                 id: "MLTI-" + Date.now(),
                 name: currentProduct[2],
-                price: document.getElementById('modal-price').innerText,
+                // Simpan harga total (Produk + Add-on)
+                price: currentCurrency === "IDR" ? "IDR " + finalPrice.toLocaleString() : "$" + finalPrice,
                 details: `METHOD: ${method.toUpperCase()} | NOTE: ${document.getElementById('req-bar').value || "-"} | ADDONS: ${addons.join(", ") || "None"}`,
                 currency: currentCurrency
             };
@@ -188,6 +214,9 @@
             cart.push(item);
             localStorage.setItem('relisn_cart', JSON.stringify(cart));
             
+            // Reset state
+            document.getElementById('addon-gmail').checked = false;
+            document.getElementById('addon-domain').checked = false;
             document.getElementById('addon-modal').classList.replace('flex', 'hidden');
             closeModal();
             updateBagCount();
