@@ -72,11 +72,11 @@
             
             <div class="space-y-3 mb-8">
                 <label class="flex items-center justify-between p-4 border border-white/5 rounded hover:bg-white/5 cursor-pointer">
-                    <span class="text-[10px] uppercase tracking-widest">Gmail Business Setup</span>
+                    <span id="label-gmail" class="text-[10px] uppercase tracking-widest">Gmail Business Setup</span>
                     <input type="checkbox" id="addon-gmail" class="accent-amber-500">
                 </label>
                 <label class="flex items-center justify-between p-4 border border-white/5 rounded hover:bg-white/5 cursor-pointer">
-                    <span class="text-[10px] uppercase tracking-widest">Custom Domain (.com)</span>
+                    <span id="label-domain" class="text-[10px] uppercase tracking-widest">Custom Domain (.com)</span>
                     <input type="checkbox" id="addon-domain" class="accent-amber-500">
                 </label>
             </div>
@@ -92,13 +92,23 @@
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOvrvbDtlEMHVK2Syn_LOiJ1OCEzs_M4AoqBZ_G7e7NFfx0-vVqNHK76tfMGyp8vlmNw/exec';
         let allProducts = [];
         let currentProduct = null;
+        let configData = {}; // Menyimpan data dari sheet Config
         let currentCurrency = Intl.DateTimeFormat().resolvedOptions().timeZone === "Asia/Jakarta" ? "IDR" : "USD";
 
         async function initSystem() {
             try {
-                const res = await fetch(SCRIPT_URL + "?target=catalog");
-                const data = await res.json();
-                allProducts = data.slice(1).filter(item => item[1] === "Static"); 
+                // Fetch Katalog
+                const resCatalog = await fetch(SCRIPT_URL + "?target=catalog");
+                const dataCatalog = await resCatalog.json();
+                allProducts = dataCatalog.slice(1).filter(item => item[1] === "Static"); 
+
+                // Fetch Config untuk harga Add-ons
+                const resConfig = await fetch(SCRIPT_URL + "?target=config");
+                const dataConfig = await resConfig.json();
+                dataConfig.forEach(row => {
+                    configData[row[0]] = row[1]; // Memetakan svc_gmail_idr dll
+                });
+
                 renderProducts();
                 updateBagCount();
             } catch (e) { console.error("Database error"); }
@@ -131,6 +141,14 @@
             document.getElementById('modal-cat').innerText = currentProduct[1];
             document.getElementById('modal-demo').href = currentProduct[10] || "#";
             document.getElementById('method-select').value = "source";
+
+            // Update Label Harga Add-on secara dinamis dari configData
+            const gPrice = currentCurrency === "IDR" ? "IDR " + Number(configData['svc_gmail_idr']).toLocaleString() : "$" + configData['svc_gmail_usd'];
+            const dPrice = currentCurrency === "IDR" ? "IDR " + Number(configData['svc_domain_idr']).toLocaleString() : "$" + configData['svc_domain_usd'];
+            
+            document.getElementById('label-gmail').innerText = `Gmail Business Setup (+${gPrice})`;
+            document.getElementById('label-domain').innerText = `Custom Domain (+${dPrice})`;
+
             updateModalPrice();
             document.getElementById('product-modal').classList.replace('hidden', 'flex');
         }
@@ -140,7 +158,6 @@
             let price = 0;
             const reqContainer = document.getElementById('req-container');
             
-            // Show/Hide requirement bar
             if(method === 'setup' || method === 'full') reqContainer.classList.remove('hidden');
             else reqContainer.classList.add('hidden');
 
@@ -169,15 +186,30 @@
         function finalAddToBag(useAddons) {
             const method = document.getElementById('method-select').value;
             let addons = [];
+            let addonTotalPrice = 0;
+
+            // Ambil harga dasar dari modal (menghilangkan format teks agar jadi angka)
+            let rawPriceText = document.getElementById('modal-price').innerText;
+            let basePrice = parseInt(rawPriceText.replace(/[^0-9]/g, ''));
+
             if(useAddons) {
-                if(document.getElementById('addon-gmail').checked) addons.push("Gmail Setup");
-                if(document.getElementById('addon-domain').checked) addons.push("Custom Domain");
+                if(document.getElementById('addon-gmail').checked) {
+                    addons.push("Gmail Setup");
+                    addonTotalPrice += currentCurrency === "IDR" ? Number(configData['svc_gmail_idr']) : Number(configData['svc_gmail_usd']);
+                }
+                if(document.getElementById('addon-domain').checked) {
+                    addons.push("Custom Domain");
+                    addonTotalPrice += currentCurrency === "IDR" ? Number(configData['svc_domain_idr']) : Number(configData['svc_domain_usd']);
+                }
             }
+
+            const finalPrice = basePrice + addonTotalPrice;
 
             const item = {
                 id: "STAT-" + Date.now(),
                 name: currentProduct[2],
-                price: document.getElementById('modal-price').innerText,
+                // Simpan harga yang sudah digabung dengan addon
+                price: currentCurrency === "IDR" ? "IDR " + finalPrice.toLocaleString() : "$" + finalPrice,
                 details: `METHOD: ${method.toUpperCase()} | BRIEF: ${document.getElementById('req-bar').value || "-"} | ADDONS: ${addons.join(", ") || "None"}`,
                 currency: currentCurrency
             };
@@ -186,6 +218,10 @@
             cart.push(item);
             localStorage.setItem('relisn_cart', JSON.stringify(cart));
             
+            // Reset state checkbox
+            document.getElementById('addon-gmail').checked = false;
+            document.getElementById('addon-domain').checked = false;
+
             document.getElementById('addon-modal').classList.replace('flex', 'hidden');
             closeModal();
             updateBagCount();
