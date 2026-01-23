@@ -6,6 +6,7 @@
     <title>RELISN | Interactive Architecture</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;700&family=Tenor+Sans&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --bg: #080808; --gold: #f59e0b; --card: #0E0E0E; }
         body { background: var(--bg); color: #D1D1D1; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
@@ -14,36 +15,107 @@
         .product-card:hover .product-img { filter: grayscale(0%); transform: scale(1.05); opacity: 1; }
         .product-card { background: #0A0A0A; border: 1px solid rgba(255,255,255,0.03); transition: 0.5s; }
         .modal-blur { backdrop-filter: blur(20px); background: rgba(0,0,0,0.8); }
-        .input-dark { background: #111; border: 1px solid #222; color: white; padding: 10px; border-radius: 4px; outline: none; width: 100%; }
+        .input-dark { background: #111; border: 1px solid #222; color: white; padding: 10px; border-radius: 4px; outline: none; width: 100%; font-size: 12px; }
+        .input-dark:focus { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1); }
         .hidden { display: none; }
+        
+        /* Loading Animation */
+        .loading-spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--gold);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 50px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Price Loading */
+        .price-loading {
+            display: inline-block;
+            width: 60px;
+            height: 12px;
+            background: linear-gradient(90deg, #333, #555, #333);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 2px;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-discount {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
     </style>
 </head>
 <body class="p-6">
 
+    <!-- Navigation Header -->
     <div class="max-w-7xl mx-auto flex justify-between items-center mb-16 border-b border-white/5 pb-8">
-        <h1 class="serif text-xl tracking-[0.5em]">Interactive <span class="text-amber-500">Catalog</span></h1>
-        <div class="flex gap-8 text-[9px] uppercase tracking-widest">
-            <a href="bag.html" class="hover:text-amber-500">Bag (<span id="bag-count">0</span>)</a>
-            <a href="index.html" class="opacity-40">Exit</a>
+        <div>
+            <h1 class="serif text-xl tracking-[0.5em]">Interactive <span class="text-amber-500">Catalog</span></h1>
+            <p class="text-[9px] opacity-50 uppercase tracking-widest mt-2">Motion-based web architectures</p>
+        </div>
+        <div class="flex gap-8 text-[9px] uppercase tracking-widest items-center">
+            <a href="bag.html" class="hover:text-amber-500 flex items-center gap-2">
+                <i class="fas fa-shopping-bag"></i>
+                Bag (<span id="bag-count">0</span>)
+            </a>
+            <a href="index.html" class="opacity-40 hover:opacity-100 transition">Home</a>
+            <!-- Currency Toggle -->
+            <div class="flex gap-2 items-center ml-4 border-l border-white/10 pl-4">
+                <button id="currency-idr" class="text-[9px] uppercase tracking-widest text-amber-500 font-bold">IDR</button>
+                <span class="opacity-20">|</span>
+                <button id="currency-usd" class="text-[9px] uppercase tracking-widest opacity-40">USD</button>
+            </div>
         </div>
     </div>
 
-    <div id="product-grid" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
+    <!-- Products Grid -->
+    <div id="product-grid" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div class="text-center py-20 col-span-full">
+            <div class="loading-spinner"></div>
+            <p class="text-[10px] opacity-50 mt-4 uppercase tracking-widest">Loading interactive architectures...</p>
+        </div>
+    </div>
 
+    <!-- Product Detail Modal -->
     <div id="product-modal" class="fixed inset-0 modal-blur hidden items-center justify-center p-4 z-50">
         <div class="bg-[#0E0E0E] border border-white/10 max-w-4xl w-full flex flex-col md:flex-row overflow-hidden rounded-sm">
             <div class="md:w-1/2 h-64 md:h-auto bg-zinc-900 relative">
                 <img id="modal-img" src="" class="w-full h-full object-cover">
-                <a id="modal-demo" href="#" target="_blank" class="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md py-3 text-[9px] text-center font-bold tracking-widest hover:bg-white hover:text-black transition">VIEW LIVE DEMO</a>
+                <a id="modal-demo" href="#" target="_blank" class="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md py-3 text-[9px] text-center font-bold tracking-widest hover:bg-white hover:text-black transition">
+                    <i class="fas fa-external-link-alt mr-2"></i>VIEW LIVE DEMO
+                </a>
             </div>
-            <div class="md:w-1/2 p-10 relative">
-                <button onclick="closeModal()" class="absolute top-6 right-6 text-xl opacity-20 hover:opacity-100">&times;</button>
+            
+            <div class="md:w-1/2 p-8 md:p-10 relative">
+                <button onclick="closeModal()" class="absolute top-6 right-6 text-xl opacity-20 hover:opacity-100 transition">&times;</button>
                 <p id="modal-cat" class="text-[9px] text-amber-500 font-bold uppercase tracking-[0.3em] mb-2"></p>
-                <h2 id="modal-title" class="serif text-2xl mb-6"></h2>
-                <div class="space-y-4 mb-10">
+                <h2 id="modal-title" class="serif text-2xl mb-4"></h2>
+                <p id="modal-desc" class="text-[11px] opacity-70 mb-6 leading-relaxed"></p>
+                
+                <div class="space-y-6 mb-8">
                     <div>
                         <label class="text-[8px] uppercase opacity-30 block mb-2">Delivery Method</label>
-                        <select id="method-select" onchange="updateModalPrice()" class="input-dark text-[10px]">
+                        <select id="method-select" onchange="updateModalPrice()" class="input-dark text-[11px]">
                             <option value="source">Source Only (Files Only)</option>
                             <option value="setup">Setup Only (Files + Setup)</option>
                             <option value="full">Full Deployment (Ready to Use)</option>
@@ -51,183 +123,675 @@
                     </div>
                     <div>
                         <label class="text-[8px] uppercase opacity-30 block mb-1">Total Investment</label>
-                        <p id="modal-price" class="text-xl font-light text-white"></p>
+                        <p id="modal-price" class="text-2xl font-light text-white">
+                            <span class="price-loading"></span>
+                        </p>
+                        <p id="modal-original-price" class="text-[9px] opacity-50 line-through mt-1 hidden"></p>
                     </div>
                     <div id="req-container" class="hidden">
-                        <label class="text-[8px] uppercase opacity-30 block mb-2">Requirement Note (Required)</label>
-                        <textarea id="req-bar" class="input-dark text-[11px] h-20" placeholder="Hosting details, credentials, atau permintaan khusus..."></textarea>
+                        <label class="text-[8px] uppercase opacity-30 block mb-2">
+                            <i class="fas fa-exclamation-circle mr-1"></i>Requirement Note (Required)
+                        </label>
+                        <textarea id="req-bar" class="input-dark text-[11px] h-24" placeholder="Hosting details, credentials, or specific requests..."></textarea>
+                        <p class="text-[8px] opacity-40 mt-1">Required for setup and deployment services</p>
                     </div>
                 </div>
-                <button onclick="goToAddons()" class="w-full bg-amber-500 text-black py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-amber-600 transition">Buy Architecture</button>
+
+                <div class="flex gap-3">
+                    <button onclick="closeModal()" class="flex-1 border border-white/10 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition">
+                        Cancel
+                    </button>
+                    <button onclick="goToAddons()" class="flex-1 bg-amber-500 text-black py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-amber-600 transition">
+                        <i class="fas fa-shopping-cart mr-2"></i>Continue
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Add-ons Modal -->
     <div id="addon-modal" class="fixed inset-0 modal-blur hidden items-center justify-center p-4 z-[60]">
-        <div class="bg-[#0E0E0E] border border-white/10 max-w-md w-full p-8">
-            <h2 class="serif text-lg mb-4 text-amber-500">Enhancements</h2>
-            <p class="text-[10px] opacity-50 mb-6 uppercase tracking-wider">Pilih layanan tambahan.</p>
-            <div class="space-y-3 mb-8">
-                <label class="flex items-center justify-between p-4 border border-white/5 rounded hover:bg-white/5 cursor-pointer">
-                    <span id="label-gmail" class="text-[10px] uppercase tracking-widest">Gmail Business Setup</span>
-                    <input type="checkbox" id="addon-gmail" class="accent-amber-500">
-                </label>
-                <label class="flex items-center justify-between p-4 border border-white/5 rounded hover:bg-white/5 cursor-pointer">
-                    <span id="label-domain" class="text-[10px] uppercase tracking-widest">Custom Domain (.com)</span>
-                    <input type="checkbox" id="addon-domain" class="accent-amber-500">
-                </label>
+        <div class="bg-[#0E0E0E] border border-white/10 max-w-md w-full p-8 rounded-sm">
+            <h2 class="serif text-lg mb-2 text-amber-500">Enhancements</h2>
+            <p class="text-[10px] opacity-50 mb-6 uppercase tracking-wider">Select optional services to include.</p>
+            
+            <div id="addons-container" class="space-y-4 mb-8">
+                <!-- Add-ons will be loaded dynamically from Firebase -->
+                <div class="text-center py-4">
+                    <span class="price-loading" style="width: 100px;"></span>
+                    <p class="text-[9px] opacity-50 mt-2">Loading add-ons...</p>
+                </div>
             </div>
-            <div class="flex gap-4">
-                <button onclick="finalAddToBag(false)" class="flex-1 border border-white/10 py-3 text-[9px] font-bold uppercase tracking-widest opacity-50 hover:opacity-100">Skip</button>
-                <button onclick="finalAddToBag(true)" class="flex-1 bg-white text-black py-3 text-[9px] font-bold uppercase tracking-widest">Add & Bag</button>
+
+            <div class="border-t border-white/10 pt-6 mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] uppercase opacity-70">Subtotal</span>
+                    <span id="subtotal-price" class="text-[12px] font-medium">
+                        <span class="price-loading" style="width: 80px;"></span>
+                    </span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] uppercase opacity-70">Add-ons</span>
+                    <span id="addons-total" class="text-[12px] opacity-70">+0</span>
+                </div>
+                <div class="flex justify-between items-center pt-4 border-t border-white/5">
+                    <span class="text-[11px] uppercase font-bold">Total</span>
+                    <span id="final-total" class="text-lg font-bold text-amber-500">
+                        <span class="price-loading" style="width: 100px;"></span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeAddonModal()" class="flex-1 border border-white/10 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition">
+                    Back
+                </button>
+                <button onclick="finalAddToBag()" class="flex-1 bg-white text-black py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-100 transition">
+                    <i class="fas fa-check mr-2"></i>Add to Bag
+                </button>
             </div>
         </div>
     </div>
 
-    <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOvrvbDtlEMHVK2Syn_LOiJ1OCEzs_M4AoqBZ_G7e7NFfx0-vVqNHK76tfMGyp8vlmNw/exec';
-        let allProducts = [];
-        let currentProduct = null;
-        let configData = {};
-        let currentCurrency = Intl.DateTimeFormat().resolvedOptions().timeZone === "Asia/Jakarta" ? "IDR" : "USD";
+    <!-- Success Alert -->
+    <div id="success-alert" class="fixed top-6 right-6 z-[10001] bg-green-500 text-white px-6 py-4 rounded-lg shadow-xl hidden items-center gap-3">
+        <i class="fas fa-check-circle"></i>
+        <span id="success-message">Item successfully added to bag!</span>
+    </div>
 
-        async function initSystem() {
-            try {
-                // Ambil Data Katalog
-                const resCatalog = await fetch(SCRIPT_URL + "?target=catalog");
-                const dataCatalog = await resCatalog.json();
-                allProducts = dataCatalog.slice(1).filter(item => item[1] === "Interactive");
+    <!-- Error Alert -->
+    <div id="error-alert" class="fixed top-6 right-6 z-[10001] bg-red-500 text-white px-6 py-4 rounded-lg shadow-xl hidden items-center gap-3">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="error-message">Error adding item to bag!</span>
+    </div>
 
-                // Ambil Data Config (Add-ons)
-                const resConfig = await fetch(SCRIPT_URL + "?target=config");
-                const dataConfig = await resConfig.json();
-                // Ubah array config menjadi object agar mudah diakses
-                dataConfig.forEach(row => {
-                    configData[row[0]] = row[1]; // row[0] = key (svc_gmail_idr), row[1] = value (50000)
-                });
+    <!-- Firebase SDK v10.8.0 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-                renderProducts();
-                updateBagCount();
-            } catch (e) { console.error("Database connection failed", e); }
-        }
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyADGFlw0Z7qTgUckezzK4JjzeSimeHWcyU",
+            authDomain: "relisn-studio.firebaseapp.com",
+            databaseURL: "https://relisn-studio-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "relisn-studio",
+            storageBucket: "relisn-studio.firebasestorage.app",
+            messagingSenderId: "709534949399",
+            appId: "1:709534949399:web:064b7e82fdedbcdff5bc52",
+            measurementId: "G-36L1ZYBBSP"
+        };
 
-        function renderProducts() {
-            const grid = document.getElementById('product-grid');
-            grid.innerHTML = allProducts.map((p, index) => {
-                const price = currentCurrency === "IDR" ? "IDR " + Number(p[3]).toLocaleString() : "$" + p[4];
-                return `
-                <div class="product-card group cursor-pointer" onclick="openProduct(${index})">
-                    <div class="relative overflow-hidden aspect-[4/5]">
-                        <img src="${p[9]}" class="product-img w-full h-full object-cover">
-                        <div class="absolute bottom-6 left-6 right-6 flex justify-between items-end">
-                            <div>
-                                <p class="text-[8px] text-amber-500 font-bold uppercase tracking-[0.2em] mb-1">${p[1]}</p>
-                                <h3 class="serif text-sm tracking-widest text-white">${p[2]}</h3>
-                            </div>
-                            <p class="text-[10px] opacity-60">${price}</p>
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Main Application
+        const INTERACTIVE_CATALOG = {
+            // App State
+            allProducts: [],
+            addonsData: [],
+            currentProduct: null,
+            currentCurrency: localStorage.getItem('relisn_currency') || 'IDR',
+            currentAddons: [],
+            currentAddonsTotal: 0,
+            
+            // Initialize App
+            async init() {
+                console.log('Interactive Catalog - Initializing...');
+                
+                // Load bag count
+                this.updateBagCount();
+                
+                // Set up currency toggle
+                this.setupCurrencyToggle();
+                
+                // Load data from Firebase
+                this.loadProductsRealtime();
+                this.loadAddonsRealtime();
+                
+                console.log('Interactive Catalog - Ready!');
+            },
+            
+            // Load products from Firebase with realtime updates
+            loadProductsRealtime() {
+                try {
+                    const productsRef = ref(database, 'catalog/products');
+                    
+                    onValue(productsRef, (snapshot) => {
+                        if (snapshot.exists()) {
+                            const productsData = snapshot.val();
+                            
+                            // Convert object to array and filter for Interactive products
+                            this.allProducts = Object.entries(productsData)
+                                .filter(([_, product]) => product.category === 'Interactive')
+                                .map(([id, product]) => ({
+                                    id,
+                                    ...product
+                                }));
+                            
+                            console.log(`Loaded ${this.allProducts.length} interactive products from Firebase`);
+                            
+                            // Re-render products
+                            this.renderProducts();
+                            
+                        } else {
+                            console.log('No products found in Firebase');
+                            this.allProducts = [];
+                            this.renderProducts();
+                        }
+                    });
+                    
+                } catch (error) {
+                    console.error('Error loading products:', error);
+                    this.showError('Failed to load products. Please refresh.');
+                }
+            },
+            
+            // Load add-ons from Firebase with realtime updates
+            loadAddonsRealtime() {
+                try {
+                    const addonsRef = ref(database, 'catalog/addons');
+                    
+                    onValue(addonsRef, (snapshot) => {
+                        if (snapshot.exists()) {
+                            const addonsData = snapshot.val();
+                            
+                            // Convert object to array and sort by order
+                            this.addonsData = Object.entries(addonsData)
+                                .filter(([_, addon]) => addon.enabled !== false)
+                                .map(([id, addon]) => ({
+                                    id,
+                                    ...addon
+                                }))
+                                .sort((a, b) => (a.order || 0) - (b.order || 0));
+                            
+                            console.log(`Loaded ${this.addonsData.length} add-ons from Firebase`);
+                            
+                        } else {
+                            console.log('No add-ons found in Firebase');
+                            this.addonsData = [];
+                        }
+                    });
+                    
+                } catch (error) {
+                    console.error('Error loading addons:', error);
+                }
+            },
+            
+            // Render products to grid
+            renderProducts() {
+                const grid = document.getElementById('product-grid');
+                if (!grid) return;
+                
+                if (this.allProducts.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full text-center py-20">
+                            <i class="fas fa-box-open text-4xl opacity-20 mb-4"></i>
+                            <p class="text-[10px] opacity-50 uppercase tracking-widest">No interactive architectures available</p>
+                            <p class="text-[9px] opacity-30 mt-2">Add products in admin panel to see them here</p>
                         </div>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function openProduct(index) {
-            currentProduct = allProducts[index];
-            document.getElementById('modal-img').src = currentProduct[9]; 
-            document.getElementById('modal-title').innerText = currentProduct[2];
-            document.getElementById('modal-cat').innerText = currentProduct[1];
-            document.getElementById('modal-demo').href = currentProduct[10] || "#"; 
-            document.getElementById('method-select').value = "source";
-            
-            // Update Label Harga Add-on secara Dinamis dari Config
-            const gPrice = currentCurrency === "IDR" ? "IDR " + Number(configData['svc_gmail_idr']).toLocaleString() : "$" + configData['svc_gmail_usd'];
-            const dPrice = currentCurrency === "IDR" ? "IDR " + Number(configData['svc_domain_idr']).toLocaleString() : "$" + configData['svc_domain_usd'];
-            
-            document.getElementById('label-gmail').innerText = `Gmail Business Setup (+${gPrice})`;
-            document.getElementById('label-domain').innerText = `Custom Domain (+${dPrice})`;
-
-            updateModalPrice();
-            document.getElementById('product-modal').classList.replace('hidden', 'flex');
-        }
-
-        function updateModalPrice() {
-            const method = document.getElementById('method-select').value;
-            let price = 0;
-            const reqContainer = document.getElementById('req-container');
-            
-            if(method === 'setup' || method === 'full') reqContainer.classList.remove('hidden');
-            else reqContainer.classList.add('hidden');
-
-            if (currentCurrency === "IDR") {
-                if(method === 'source') price = currentProduct[3];
-                if(method === 'setup') price = currentProduct[5];
-                if(method === 'full') price = currentProduct[7];
-            } else {
-                if(method === 'source') price = currentProduct[4];
-                if(method === 'setup') price = currentProduct[6];
-                if(method === 'full') price = currentProduct[8];
-            }
-            document.getElementById('modal-price').innerText = currentCurrency === "IDR" ? "IDR " + Number(price).toLocaleString() : "$" + price;
-        }
-
-        function goToAddons() {
-            const method = document.getElementById('method-select').value;
-            const note = document.getElementById('req-bar').value;
-            if((method === 'setup' || method === 'full') && !note) {
-                alert("Harap berikan catatan requirement untuk metode ini.");
-                return;
-            }
-            document.getElementById('addon-modal').classList.replace('hidden', 'flex');
-        }
-
-        function finalAddToBag(useAddons) {
-            const method = document.getElementById('method-select').value;
-            let addons = [];
-            let addonTotalPrice = 0;
-
-            // Harga Dasar Produk
-            let rawPriceText = document.getElementById('modal-price').innerText;
-            let basePrice = parseInt(rawPriceText.replace(/[^0-9]/g, ''));
-
-            if(useAddons) {
-                if(document.getElementById('addon-gmail').checked) {
-                    addons.push("Gmail Business Setup");
-                    addonTotalPrice += currentCurrency === "IDR" ? Number(configData['svc_gmail_idr']) : Number(configData['svc_gmail_usd']);
+                    `;
+                    return;
                 }
-                if(document.getElementById('addon-domain').checked) {
-                    addons.push("Custom Domain");
-                    addonTotalPrice += currentCurrency === "IDR" ? Number(configData['svc_domain_idr']) : Number(configData['svc_domain_usd']);
+                
+                grid.innerHTML = this.allProducts.map((product, index) => {
+                    // Get the correct price based on currency
+                    let price = 0;
+                    let originalPrice = 0;
+                    
+                    if (this.currentCurrency === 'IDR') {
+                        price = product.price_idr || 0;
+                        originalPrice = product.discount_price_idr || 0;
+                    } else {
+                        price = product.price_usd || 0;
+                        originalPrice = product.discount_price_usd || 0;
+                    }
+                    
+                    // Check if there's a discount (discount price is lower than regular price)
+                    const hasDiscount = originalPrice > 0 && originalPrice < price;
+                    
+                    // Display price (show discount price if available, otherwise regular price)
+                    const displayPrice = hasDiscount ? originalPrice : price;
+                    const regularPrice = hasDiscount ? price : 0;
+                    
+                    // Format prices
+                    const displayPriceFormatted = this.currentCurrency === 'IDR' ? 
+                        `IDR ${displayPrice.toLocaleString('id-ID')}` : 
+                        `$${displayPrice.toFixed(2)}`;
+                    
+                    const regularPriceFormatted = hasDiscount && regularPrice > 0 ? 
+                        (this.currentCurrency === 'IDR' ? 
+                         `IDR ${regularPrice.toLocaleString('id-ID')}` : 
+                         `$${regularPrice.toFixed(2)}`) : '';
+                    
+                    return `
+                    <div class="product-card group cursor-pointer" onclick="openProduct(${index})">
+                        <div class="relative overflow-hidden aspect-[4/5]">
+                            <img src="${product.image || 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=500&fit=crop'}" 
+                                 class="product-img w-full h-full object-cover"
+                                 onerror="this.src='https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=500&fit=crop'">
+                            
+                            ${hasDiscount ? `
+                            <div class="absolute top-4 right-4 bg-amber-500 text-black text-[8px] font-bold px-2 py-1 uppercase tracking-widest">
+                                SALE
+                            </div>` : ''}
+                            
+                            <div class="absolute bottom-6 left-6 right-6 flex justify-between items-end">
+                                <div>
+                                    <p class="text-[8px] text-amber-500 font-bold uppercase tracking-[0.2em] mb-1">${product.category || 'Interactive'}</p>
+                                    <h3 class="serif text-sm tracking-widest text-white">${product.name}</h3>
+                                    <p class="text-[9px] opacity-60 mt-1 line-clamp-1">${product.tagline || ''}</p>
+                                </div>
+                                <div class="text-right">
+                                    ${hasDiscount && regularPriceFormatted ? `
+                                    <p class="text-[9px] opacity-50 line-through">${regularPriceFormatted}</p>
+                                    <p class="text-[11px] text-amber-500 font-medium">${displayPriceFormatted}</p>
+                                    ` : `
+                                    <p class="text-[11px] opacity-90 font-medium">${displayPriceFormatted}</p>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            },
+            
+            // Open product modal
+            openProduct(index) {
+                this.currentProduct = this.allProducts[index];
+                const product = this.currentProduct;
+                
+                // Update modal content
+                document.getElementById('modal-img').src = product.image || 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=500&fit=crop';
+                document.getElementById('modal-title').textContent = product.name;
+                document.getElementById('modal-cat').textContent = product.category || 'Interactive';
+                document.getElementById('modal-desc').textContent = product.description || 'A premium interactive web architecture with advanced motion and user engagement features.';
+                document.getElementById('modal-demo').href = product.demo_url || '#';
+                
+                // Reset modal state
+                document.getElementById('method-select').value = 'source';
+                document.getElementById('req-bar').value = '';
+                
+                // Update price display
+                this.updateModalPrice();
+                
+                // Show modal
+                document.getElementById('product-modal').classList.replace('hidden', 'flex');
+            },
+            
+            // Update modal price based on delivery method
+            updateModalPrice() {
+                const method = document.getElementById('method-select').value;
+                const product = this.currentProduct;
+                const reqContainer = document.getElementById('req-container');
+                
+                // Show/hide requirement field
+                if (method === 'setup' || method === 'full') {
+                    reqContainer.classList.remove('hidden');
+                } else {
+                    reqContainer.classList.add('hidden');
+                }
+                
+                // Get product price based on delivery method and currency
+                let productPrice = 0;
+                let regularPrice = 0;
+                
+                // Determine which price field to use based on method
+                let priceField = '';
+                
+                switch(method) {
+                    case 'source':
+                        priceField = this.currentCurrency === 'IDR' ? 'source_idr' : 'source_usd';
+                        break;
+                    case 'setup':
+                        priceField = this.currentCurrency === 'IDR' ? 'setup_idr' : 'setup_usd';
+                        break;
+                    case 'full':
+                        priceField = this.currentCurrency === 'IDR' ? 'full_idr' : 'full_usd';
+                        break;
+                    default:
+                        priceField = this.currentCurrency === 'IDR' ? 'price_idr' : 'price_usd';
+                }
+                
+                // Get the price from product data
+                productPrice = product[priceField] || 0;
+                
+                // For full deployment, check if there's a discount price
+                if (method === 'full') {
+                    const discountField = this.currentCurrency === 'IDR' ? 'discount_price_idr' : 'discount_price_usd';
+                    const discountPrice = product[discountField] || 0;
+                    
+                    if (discountPrice > 0 && discountPrice < productPrice) {
+                        regularPrice = productPrice; // Store regular price
+                        productPrice = discountPrice; // Use discount price
+                    }
+                }
+                
+                // Update price display
+                const priceDisplay = this.currentCurrency === 'IDR' ? 
+                    `IDR ${productPrice.toLocaleString('id-ID')}` : 
+                    `$${productPrice.toFixed(2)}`;
+                
+                document.getElementById('modal-price').innerHTML = priceDisplay;
+                
+                // Show original price if there's a discount
+                const originalPriceEl = document.getElementById('modal-original-price');
+                if (regularPrice > 0 && regularPrice > productPrice) {
+                    const originalDisplay = this.currentCurrency === 'IDR' ?
+                        `IDR ${regularPrice.toLocaleString('id-ID')}` :
+                        `$${regularPrice.toFixed(2)}`;
+                    originalPriceEl.textContent = originalDisplay;
+                    originalPriceEl.classList.remove('hidden');
+                } else {
+                    originalPriceEl.classList.add('hidden');
+                }
+                
+                console.log(`Price updated: Method=${method}, Currency=${this.currentCurrency}, Price=${productPrice}`);
+            },
+            
+            // Go to add-ons modal
+            goToAddons() {
+                const method = document.getElementById('method-select').value;
+                const note = document.getElementById('req-bar').value.trim();
+                
+                // Validate requirement note for setup/full methods
+                if ((method === 'setup' || method === 'full') && !note) {
+                    this.showError('Please provide requirement notes for setup/deployment services');
+                    return;
+                }
+                
+                // Render add-ons first
+                this.renderAddons();
+                
+                // Update add-on calculations
+                this.updateAddonCalculations();
+                
+                // Show add-ons modal
+                document.getElementById('addon-modal').classList.replace('hidden', 'flex');
+            },
+            
+            // Render add-ons in modal
+            renderAddons() {
+                const container = document.getElementById('addons-container');
+                if (!container) return;
+                
+                if (this.addonsData.length === 0) {
+                    container.innerHTML = '<p class="text-[10px] opacity-50 text-center py-4">No add-ons available</p>';
+                    return;
+                }
+                
+                const addonsHTML = this.addonsData.map(addon => {
+                    const price = this.currentCurrency === 'IDR' ? 
+                        (addon.price_idr || 0) : 
+                        (addon.price_usd || 0);
+                    
+                    const priceDisplay = this.currentCurrency === 'IDR' ? 
+                        `IDR ${price.toLocaleString('id-ID')}` : 
+                        `$${price.toFixed(2)}`;
+                    
+                    return `
+                    <label class="flex items-center justify-between p-4 border border-white/5 rounded hover:bg-white/5 cursor-pointer transition group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-amber-500/10 rounded-full flex items-center justify-center">
+                                <i class="fas ${addon.icon || 'fa-plus'} text-amber-500 text-sm"></i>
+                            </div>
+                            <div>
+                                <span class="text-[11px] font-medium block">${addon.name}</span>
+                                <span class="text-[9px] opacity-50">${addon.description || ''}</span>
+                            </div>
+                        </div>
+                        <input type="checkbox" id="addon-${addon.id}" 
+                               data-price="${price}" 
+                               data-name="${addon.name}"
+                               class="addon-checkbox accent-amber-500 w-5 h-5" 
+                               onchange="updateAddonCalculations()">
+                    </label>
+                    `;
+                }).join('');
+                
+                container.innerHTML = addonsHTML;
+            },
+            
+            // Update add-on calculations
+            updateAddonCalculations() {
+                const basePriceText = document.getElementById('modal-price').textContent;
+                let basePrice = 0;
+                
+                if (this.currentCurrency === 'IDR') {
+                    basePrice = parseInt(basePriceText.replace(/[^0-9]/g, '')) || 0;
+                } else {
+                    basePrice = parseFloat(basePriceText.replace(/[^\d.]/g, '')) || 0;
+                }
+                
+                // Calculate add-ons total
+                let addonsTotal = 0;
+                const selectedAddons = [];
+                
+                document.querySelectorAll('.addon-checkbox:checked').forEach(checkbox => {
+                    const price = parseFloat(checkbox.getAttribute('data-price') || 0);
+                    const name = checkbox.getAttribute('data-name');
+                    
+                    addonsTotal += price;
+                    selectedAddons.push(name);
+                });
+                
+                // Calculate final total
+                const finalTotal = basePrice + addonsTotal;
+                
+                // Update display
+                const addonsDisplay = this.currentCurrency === 'IDR' ?
+                    `+IDR ${addonsTotal.toLocaleString('id-ID')}` :
+                    `+$${addonsTotal.toFixed(2)}`;
+                
+                const finalDisplay = this.currentCurrency === 'IDR' ?
+                    `IDR ${finalTotal.toLocaleString('id-ID')}` :
+                    `$${finalTotal.toFixed(2)}`;
+                
+                const subtotalDisplay = this.currentCurrency === 'IDR' ?
+                    `IDR ${basePrice.toLocaleString('id-ID')}` :
+                    `$${basePrice.toFixed(2)}`;
+                
+                document.getElementById('subtotal-price').textContent = subtotalDisplay;
+                document.getElementById('addons-total').textContent = addonsDisplay;
+                document.getElementById('final-total').textContent = finalDisplay;
+                
+                // Store selected addons for later use
+                this.currentAddons = selectedAddons;
+                this.currentAddonsTotal = addonsTotal;
+            },
+            
+            // Close add-ons modal
+            closeAddonModal() {
+                document.getElementById('addon-modal').classList.replace('flex', 'hidden');
+            },
+            
+            // Add product to bag
+            finalAddToBag() {
+                const method = document.getElementById('method-select').value;
+                const note = document.getElementById('req-bar').value.trim();
+                const product = this.currentProduct;
+                
+                // Get final price
+                const finalPriceText = document.getElementById('final-total').textContent;
+                const basePriceText = document.getElementById('subtotal-price').textContent;
+                
+                // Get method name
+                let methodName = '';
+                switch(method) {
+                    case 'source': methodName = 'Source Only'; break;
+                    case 'setup': methodName = 'Setup Only'; break;
+                    case 'full': methodName = 'Full Deployment'; break;
+                }
+                
+                // Create cart item
+                const cartItem = {
+                    id: `INT_${Date.now()}_${product.id}`,
+                    productId: product.id,
+                    name: product.name,
+                    category: 'Interactive',
+                    basePrice: basePriceText,
+                    finalPrice: finalPriceText,
+                    currency: this.currentCurrency,
+                    deliveryMethod: methodName,
+                    deliveryMethodCode: method,
+                    requirementNote: note || 'N/A',
+                    addons: this.currentAddons || [],
+                    addonsTotal: this.currentAddonsTotal || 0,
+                    image: product.image || 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=500&fit=crop',
+                    timestamp: Date.now(),
+                    addedAt: new Date().toISOString(),
+                    status: 'pending'
+                };
+                
+                // Add to cart
+                this.addToCart(cartItem);
+                
+                // Close modals
+                this.closeAddonModal();
+                this.closeModal();
+                
+                // Show success message
+                this.showSuccess('Added to bag successfully!');
+                
+                // Update bag count
+                this.updateBagCount();
+                
+                // Reset addons
+                this.currentAddons = [];
+                this.currentAddonsTotal = 0;
+            },
+            
+            // Add item to cart
+            addToCart(item) {
+                try {
+                    let cart = JSON.parse(localStorage.getItem('relisn_cart')) || [];
+                    cart.push(item);
+                    localStorage.setItem('relisn_cart', JSON.stringify(cart));
+                    console.log('Item added to cart:', item);
+                } catch (error) {
+                    console.error('Error adding to cart:', error);
+                    this.showError('Failed to add item to bag. Please try again.');
+                }
+            },
+            
+            // Update bag count display
+            updateBagCount() {
+                try {
+                    const cart = JSON.parse(localStorage.getItem('relisn_cart')) || [];
+                    const bagCount = document.getElementById('bag-count');
+                    if (bagCount) {
+                        bagCount.textContent = cart.length;
+                    }
+                } catch (error) {
+                    console.error('Error updating bag count:', error);
+                }
+            },
+            
+            // Setup currency toggle
+            setupCurrencyToggle() {
+                const idrBtn = document.getElementById('currency-idr');
+                const usdBtn = document.getElementById('currency-usd');
+                
+                if (idrBtn && usdBtn) {
+                    idrBtn.onclick = () => this.switchCurrency('IDR');
+                    usdBtn.onclick = () => this.switchCurrency('USD');
+                    
+                    // Set initial state
+                    this.updateCurrencyButtons();
+                }
+            },
+            
+            // Switch currency
+            switchCurrency(currency) {
+                this.currentCurrency = currency;
+                localStorage.setItem('relisn_currency', currency);
+                
+                // Update UI
+                this.updateCurrencyButtons();
+                
+                // Re-render products with new currency
+                this.renderProducts();
+                
+                // Update modals if open
+                if (this.currentProduct) {
+                    this.updateModalPrice();
+                    if (document.getElementById('addon-modal').classList.contains('flex')) {
+                        this.renderAddons();
+                        this.updateAddonCalculations();
+                    }
+                }
+            },
+            
+            // Update currency buttons UI
+            updateCurrencyButtons() {
+                const idrBtn = document.getElementById('currency-idr');
+                const usdBtn = document.getElementById('currency-usd');
+                
+                if (idrBtn && usdBtn) {
+                    if (this.currentCurrency === 'IDR') {
+                        idrBtn.classList.add('text-amber-500', 'font-bold');
+                        idrBtn.classList.remove('opacity-40');
+                        usdBtn.classList.remove('text-amber-500', 'font-bold');
+                        usdBtn.classList.add('opacity-40');
+                    } else {
+                        usdBtn.classList.add('text-amber-500', 'font-bold');
+                        usdBtn.classList.remove('opacity-40');
+                        idrBtn.classList.remove('text-amber-500', 'font-bold');
+                        idrBtn.classList.add('opacity-40');
+                    }
+                }
+            },
+            
+            // Close modal
+            closeModal() {
+                document.getElementById('product-modal').classList.replace('flex', 'hidden');
+            },
+            
+            // Show success message
+            showSuccess(message) {
+                const alert = document.getElementById('success-alert');
+                const messageEl = document.getElementById('success-message');
+                
+                if (alert && messageEl) {
+                    messageEl.textContent = message;
+                    alert.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        alert.classList.add('hidden');
+                    }, 3000);
+                }
+            },
+            
+            // Show error message
+            showError(message) {
+                const alert = document.getElementById('error-alert');
+                const messageEl = document.getElementById('error-message');
+                
+                if (alert && messageEl) {
+                    messageEl.textContent = message;
+                    alert.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        alert.classList.add('hidden');
+                    }, 3000);
                 }
             }
+        };
 
-            const finalPrice = basePrice + addonTotalPrice;
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            INTERACTIVE_CATALOG.init();
+        });
 
-            const item = {
-                id: "INT-" + Date.now(),
-                name: currentProduct[2],
-                price: currentCurrency === "IDR" ? "IDR " + finalPrice.toLocaleString() : "$" + finalPrice,
-                details: `METHOD: ${method.toUpperCase()} | NOTE: ${document.getElementById('req-bar').value || "-"} | ADDONS: ${addons.join(", ") || "None"}`,
-                currency: currentCurrency
-            };
-
-            let cart = JSON.parse(localStorage.getItem('relisn_cart')) || [];
-            cart.push(item);
-            localStorage.setItem('relisn_cart', JSON.stringify(cart));
-            
-            // Reset state
-            document.getElementById('addon-gmail').checked = false;
-            document.getElementById('addon-domain').checked = false;
-            document.getElementById('addon-modal').classList.replace('flex', 'hidden');
-            closeModal();
-            updateBagCount();
-        }
-
-        function closeModal() { document.getElementById('product-modal').classList.replace('flex', 'hidden'); }
-        function updateBagCount() {
-            const cart = JSON.parse(localStorage.getItem('relisn_cart')) || [];
-            document.getElementById('bag-count').innerText = cart.length;
-        }
-        window.onload = initSystem;
+        // Global functions for HTML onclick
+        window.openProduct = (index) => INTERACTIVE_CATALOG.openProduct(index);
+        window.closeModal = () => INTERACTIVE_CATALOG.closeModal();
+        window.updateModalPrice = () => INTERACTIVE_CATALOG.updateModalPrice();
+        window.goToAddons = () => INTERACTIVE_CATALOG.goToAddons();
+        window.closeAddonModal = () => INTERACTIVE_CATALOG.closeAddonModal();
+        window.finalAddToBag = () => INTERACTIVE_CATALOG.finalAddToBag();
+        window.updateAddonCalculations = () => INTERACTIVE_CATALOG.updateAddonCalculations();
     </script>
 </body>
 </html>
